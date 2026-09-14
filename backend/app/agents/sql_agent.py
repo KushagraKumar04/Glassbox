@@ -33,6 +33,8 @@ class SQLAgent:
         self,
         question: str,
         tables: list[str],
+        glossary: str = "",
+        context: str = "",
     ) -> dict:
         """
         Returns:
@@ -56,7 +58,7 @@ class SQLAgent:
 
         schema = self.db.schema_for_prompt(tables)
         samples = self._samples_for_prompt(tables)
-        prompt = build_sql_prompt(question, schema, samples)
+        prompt = build_sql_prompt(question, schema, samples, glossary, context)
 
         raw = await self.llm.generate(prompt, system=SQL_SYSTEM, json_mode=True)
         parsed = self._parse(raw)
