@@ -14,11 +14,13 @@ import re
 from datetime import datetime, timedelta
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from app.core.rate_limit import limiter
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
+from app.core.audit import audit
 from app.core.security import (
     create_access_token,
     generate_reset_token,
@@ -28,6 +30,8 @@ from app.core.security import (
     validate_password_policy,
     verify_password,
 )
+from app.core.email import get_email_sender
+from app.emails import password_reset_email
 from app.db.models import PasswordResetToken, User
 from app.db.session import get_session
 from app.dependencies.auth import get_current_user
@@ -69,15 +73,18 @@ def _reset_url(raw_token: str) -> str:
 
 @router.get("/config")
 async def auth_config() -> dict:
-    """Public — the frontend checks this to decide whether to show /login."""
+    """Public — the frontend checks this to decide what to render."""
     return {
         "enabled": settings.auth_enabled,
         "min_password_length": settings.auth_min_password_length,
+        "email_enabled": settings.email_delivery_active,
     }
 
 
 @router.post("/register", response_model=TokenResponse)
+@limiter.limit(lambda: get_settings().rate_limit_register)
 async def register(
+    request: Request,
     req: RegisterRequest,
     session: AsyncSession = Depends(get_session),
 ):
@@ -123,6 +130,15 @@ async def register(
     await session.refresh(user)
 
     log.info("user_registered", user_id=user.id, username=user.username)
+    await audit(
+        "auth.register",
+        request=request,
+        user_id=user.id,
+        username=user.username,
+        target_type="user",
+        target_id=user.id,
+        details={"email_domain": user.email.split("@")[-1]},
+    )
 
     token = create_access_token(user.id)
     return TokenResponse(
@@ -134,7 +150,9 @@ async def register(
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit(lambda: get_settings().rate_limit_login)
 async def login(
+    request: Request,
     req: LoginRequest,
     session: AsyncSession = Depends(get_session),
 ):
@@ -156,15 +174,42 @@ async def login(
     user = result.scalar_one_or_none()
 
     if not user or not user.is_active:
+        await audit(
+            "auth.login_failed",
+            request=request,
+            username=ident,
+            details={"reason": "unknown_or_inactive"},
+        )
         raise HTTPException(401, "Invalid credentials.")
 
     if not user.hashed_password:
+        await audit(
+            "auth.login_failed",
+            request=request,
+            username=ident,
+            details={"reason": "unknown_or_inactive"},
+        )
         raise HTTPException(401, "Invalid credentials.")
 
     if not verify_password(req.password, user.hashed_password):
+        await audit(
+            "auth.login_failed",
+            request=request,
+            username=ident,
+            details={"reason": "unknown_or_inactive"},
+        )
         raise HTTPException(401, "Invalid credentials.")
 
     log.info("user_login", user_id=user.id, username=user.username)
+    await audit(
+        "auth.login",
+        request=request,
+        user_id=user.id,
+        username=user.username,
+        target_type="user",
+        target_id=user.id,
+        details={"method": "password"},
+    )
 
     token = create_access_token(user.id)
     return TokenResponse(
@@ -183,7 +228,9 @@ async def me(user: User = Depends(get_current_user)):
 # ── Password reset ─────────────────────────────────────────
 
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
+@limiter.limit(lambda: get_settings().rate_limit_forgot)
 async def forgot_password(
+    request: Request,
     req: ForgotPasswordRequest,
     session: AsyncSession = Depends(get_session),
 ):
@@ -238,14 +285,45 @@ async def forgot_password(
 
     reset_url = _reset_url(raw)
 
-    # Always log the reset link — the operator is the one running the server
-    log.warning(
-        "password_reset_link_generated",
-        user_id=user.id,
-        username=user.username,
-        expires_in_minutes=settings.auth_reset_token_minutes,
-        reset_url=reset_url,
-    )
+    # Always log the reset link — operator visibility even when SMTP is on.
+    if not settings.email_delivery_active or settings.app_debug:
+        log.warning(
+            "password_reset_link_generated",
+            user_id=user.id,
+            username=user.username,
+            expires_in_minutes=settings.auth_reset_token_minutes,
+            reset_url=reset_url,
+        )
+
+        await audit(
+            "auth.password_reset_requested",
+            request=request,
+            user_id=user.id,
+            username=user.username,
+            target_type="user",
+            target_id=user.id,
+            details={"email_domain": user.email.split("@")[-1]},
+        )
+
+    # Attempt to email the link if SMTP is configured. Fail-soft — the
+    # endpoint always returns 200 to prevent email enumeration.
+    sender = get_email_sender()
+    if sender.enabled:
+        html, text = password_reset_email(
+            username=user.username,
+            reset_url=reset_url,
+            expires_minutes=settings.auth_reset_token_minutes,
+        )
+        try:
+            await sender.send(
+                to=user.email,
+                subject="Reset your AI Data Analyst password",
+                html=html,
+                text=text,
+            )
+        except Exception as e:
+            # send() already fails soft; this is a belt-and-suspenders guard
+            log.warning("email_send_unexpected", error=str(e)[:200])
 
     if settings.auth_show_reset_link:
         log.warning(
@@ -258,7 +336,9 @@ async def forgot_password(
 
 
 @router.post("/reset-password", response_model=UserOut)
+@limiter.limit(lambda: get_settings().rate_limit_reset)
 async def reset_password(
+    request: Request,
     req: ResetPasswordRequest,
     session: AsyncSession = Depends(get_session),
 ):
@@ -304,5 +384,13 @@ async def reset_password(
     await session.refresh(user)
 
     log.info("password_reset_completed", user_id=user.id)
+    await audit(
+        "auth.password_reset_completed",
+        request=request,
+        user_id=user.id,
+        username=user.username,
+        target_type="user",
+        target_id=user.id,
+    )
 
-    return UserOut(**user.to_dict())
+    return UserOut(**user.to_dict())    
