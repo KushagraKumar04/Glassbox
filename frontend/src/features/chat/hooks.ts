@@ -25,7 +25,16 @@ export interface UseAnalysisRun {
   streamingAnswer: string;
 }
 
-const STEP_ORDER = ["planning", "schema", "query", "compute", "translate", "visualizing"];
+const STEP_ORDER = [
+  "planning",
+  "schema",
+  "query",
+  "compute",
+  "translate",
+  "visualizing",
+  "suggest",
+  "anomalies",
+];
 
 export function useAnalysisRun(): UseAnalysisRun {
   const [steps, setSteps] = useState<AgentStep[]>([]);
