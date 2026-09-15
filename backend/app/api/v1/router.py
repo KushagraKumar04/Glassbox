@@ -8,6 +8,7 @@ from app.api.v1 import (
     columns,
     datasets,
     execute,
+    explain,
     health,
     metrics,
     runs,
@@ -29,5 +30,6 @@ api_router.include_router(templates.router)
 api_router.include_router(metrics.router)
 api_router.include_router(runs.router)
 api_router.include_router(execute.router)
+api_router.include_router(explain.router)
 api_router.include_router(system.router)
 api_router.include_router(audit.router)
