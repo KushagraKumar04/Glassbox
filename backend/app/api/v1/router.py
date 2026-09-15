@@ -6,7 +6,9 @@ from app.api.v1 import (
     auth,
     chat,
     columns,
+    conversations,
     datasets,
+    drilldown,
     execute,
     explain,
     health,
@@ -23,7 +25,9 @@ api_router.include_router(health.router)
 api_router.include_router(auth.router)
 api_router.include_router(chat.router)
 api_router.include_router(columns.router)
+api_router.include_router(conversations.router)
 api_router.include_router(datasets.router)
+api_router.include_router(drilldown.router)
 api_router.include_router(sources.router)
 api_router.include_router(suggestions.router)
 api_router.include_router(templates.router)
