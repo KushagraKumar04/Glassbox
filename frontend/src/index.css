@@ -414,3 +414,14 @@ input[type="date"]::-moz-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.6;
 }
+
+/* Thread mode — message spacing tweaks */
+.chat-thread {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-thread {
+    scroll-behavior: auto;
+  }
+}
