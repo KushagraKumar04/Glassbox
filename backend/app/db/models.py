@@ -35,3 +35,14 @@ def _utcnow() -> datetime:
     """
     Naive UTC datetime. Avoids the deprecated datetime.utcnow() in Python 3.12+.
 
+    Storage is always UTC — display converts to DISPLAY_TIMEZONE at
+    serialization time.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _iso_local(dt: datetime | None) -> str | None:
+    """
+    Serialize a stored (naive UTC) datetime as an ISO 8601 string tagged
+    with the configured display timezone.
+
