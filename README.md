@@ -1158,5 +1158,200 @@ services:
 ## License
 
 MIT -->
+<div align="center">
 
-work in progress........
+# 🧊 GLASSBOX
+
+### *Transparency in Code. Power in Architecture.*
+
+[![Status](https://img.shields.io/badge/STATUS-UNDER%20CONSTRUCTION-orange?style=for-the-badge\&logo=githubactions\&logoColor=white)](#)
+[![Commits](https://img.shields.io/badge/COMMITS-91-blue?style=for-the-badge\&logo=git\&logoColor=white)](#)
+[![Builder](https://img.shields.io/badge/BUILDER-KushagraKumar04-purple?style=for-the-badge\&logo=github\&logoColor=white)](#)
+[![Stars](https://img.shields.io/github/stars/KushagraKumar04/Glassbox?style=for-the-badge\&logo=github\&color=yellow)](https://github.com/KushagraKumar04/Glassbox)
+
+> **"The best way to predict the future is to build it."**
+
+</div>
+
+---
+
+## 🚧 Pardon Our Dust: The Builder is at Work 🚧
+
+Welcome to **Glassbox**.
+
+Right now, this repository isn't just a codebase — it's a construction site. The scaffolding is up, the foundation is poured, and the architect (that's me) is currently welding the core components together.
+
+A **Glassbox** implies transparency — a system where you can see exactly how the gears turn. We are currently in the early, chaotic, and incredibly exciting phase of bringing this vision to life.
+
+> [!WARNING]
+> **Work in Progress:** This project is under active development. Expect breaking changes, half-built features, and the occasional spark.
+
+---
+
+## 📊 Current Progress
+
+```text
+Frontend Architecture  [██████████----------]  50% 🎨
+Backend Systems        [██████████████------]  70% ⚙️
+Core Logic Integration [██████--------------]  30% 🧠
+Overall Construction   [████████------------]  45% 🚀
+```
+
+---
+
+## 🏗️ The Blueprint (What's Being Built)
+
+While the final shape is still taking form, the anatomy of **Glassbox** is already visible in the repository.
+
+We are bridging the gap between a highly responsive frontend and a robust, scalable backend.
+
+### 📁 `frontend/`
+
+The face of the operation.
+
+Currently being styled and optimized, with recent updates focused on `index.css` and the overall frontend architecture.
+
+**Focus areas:**
+
+* 🎨 Modern UI/UX
+* ⚡ Responsive interactions
+* 🧩 Reusable components
+* 🚀 Performance optimization
+
+### 📁 `backend/`
+
+The engine room.
+
+The backend architecture and data models are actively being sculpted to ensure data integrity, maintainability, and performance.
+
+**Focus areas:**
+
+* ⚙️ RESTful APIs
+* 🗄️ Database modeling
+* 🔐 Secure backend architecture
+* 🧩 Modular API design
+
+### 🔐 Environment Control
+
+Secure configuration is managed through environment variables.
+
+Use `.env.example` as the reference for setting up your local `.env` configuration.
+
+> **Never commit secrets, API keys, passwords, or private credentials to the repository.**
+
+---
+
+## 🛠️ The Builder's Workbench
+
+Glassbox is being forged with modern, industry-standard technologies and an architecture designed for modularity and scalability.
+
+| Layer              | Technology / Approach                              |
+| ------------------ | -------------------------------------------------- |
+| 🎨 Frontend        | Modern UI principles, component-driven development |
+| ⚙️ Backend         | RESTful architecture                               |
+| 🗄️ Data           | Structured database modeling                       |
+| 🔐 Configuration   | Environment-based configuration                    |
+| 🌿 Version Control | Git & GitHub                                       |
+| 🧩 Architecture    | Modular, scalable design                           |
+
+---
+
+## ⚡ Getting Your Hands Dirty
+
+Want to watch the construction happen in real time?
+
+You can spin up the project locally.
+
+> **Note:** Glassbox is currently under active development. Some features may be incomplete, APIs may change, and bugs may occasionally bite.
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/KushagraKumar04/Glassbox.git
+cd Glassbox
+```
+
+### 2. Configure Your Environment
+
+```bash
+cp .env.example .env
+```
+
+Update `.env` with the required configuration values.
+
+### 3. Install Frontend Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+### 4. Start the Frontend
+
+```bash
+npm run dev
+```
+
+### 5. Install Backend Dependencies
+
+Open another terminal:
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### 6. Start the Backend
+
+```bash
+python main.py
+```
+
+> **Windows users:** If `cp` is unavailable, manually copy `.env.example` to `.env`.
+
+---
+
+## 🗺️ The Roadmap to Reality
+
+Here is what the builder is plotting next:
+
+* [x] Initialize repository & core architecture
+* [x] Establish backend data models
+* [ ] Finalize frontend UI/UX design
+* [ ] Connect frontend and backend APIs
+* [ ] Implement authentication & security layers
+* [ ] Write comprehensive tests
+* [ ] Optimize production architecture
+* [ ] **LAUNCH DAY 🚀**
+
+---
+
+<div align="center">
+
+## 🌟 Fuel the Builder's Engine 🌟
+
+Building a project from scratch takes time, caffeine, and a lot of late nights.
+
+If you believe in the vision of **Glassbox** and want to see it cross the finish line, the absolute best way to support the project is to **Star this repository!**
+
+Your star is like a virtual high-five. ⭐
+
+It keeps the motivation high, helps others discover the project, and gives the builder another reason to keep pushing forward.
+
+<br>
+
+[![⭐ Star this Repo](https://img.shields.io/badge/%E2%AD%90%20Star%20this%20Repo-Show%20Some%20Love-yellow?style=for-the-badge\&logo=github)](https://github.com/KushagraKumar04/Glassbox)
+
+</div>
+
+---
+
+<div align="center">
+
+<i>Built with ❤️, ☕, and a lot of late nights by <b>Kushagra Kumar</b>.</i>
+
+<br>
+
+<b>Check back soon. The glass is about to become crystal clear. 🔮</b>
+
+</div>
