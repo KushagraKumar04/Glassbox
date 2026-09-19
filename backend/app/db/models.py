@@ -46,3 +46,11 @@ def _iso_local(dt: datetime | None) -> str | None:
     Serialize a stored (naive UTC) datetime as an ISO 8601 string tagged
     with the configured display timezone.
 
+    Examples:
+      Asia/Kolkata → '2026-09-12T20:45:41+05:30'
+      UTC          → '2026-09-12T15:15:41+00:00'
+
+    The offset suffix makes the string unambiguous — every client parses it
+    correctly. Browsers then display it in the viewer's local time, which is
+    IST for users in India.
+    """
