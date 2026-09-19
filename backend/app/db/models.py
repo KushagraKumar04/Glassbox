@@ -54,3 +54,10 @@ def _iso_local(dt: datetime | None) -> str | None:
     correctly. Browsers then display it in the viewer's local time, which is
     IST for users in India.
     """
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(_display_tz()).isoformat()
+
+
