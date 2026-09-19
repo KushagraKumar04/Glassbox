@@ -28,3 +28,10 @@ def _display_tz() -> timezone | ZoneInfo:
     try:
         return ZoneInfo(get_settings().display_timezone)
     except (ZoneInfoNotFoundError, ValueError, KeyError):
+        return timezone.utc
+
+
+def _utcnow() -> datetime:
+    """
+    Naive UTC datetime. Avoids the deprecated datetime.utcnow() in Python 3.12+.
+
