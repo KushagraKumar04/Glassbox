@@ -23,3 +23,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.types import TypeDecorator
 
 
+def _display_tz() -> timezone | ZoneInfo:
+    """Resolve DISPLAY_TIMEZONE from .env; fall back to UTC on error."""
+    try:
+        return ZoneInfo(get_settings().display_timezone)
+    except (ZoneInfoNotFoundError, ValueError, KeyError):
