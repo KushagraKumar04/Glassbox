@@ -4,7 +4,7 @@
 
 A local-first, provider-agnostic analytics workspace. Upload a file or connect a
 database, ask a question in plain English, and get back SQL, Python, DAX,
-interactive charts, and a transparent execution trace — never an opaque answer.
+interactive charts, and a transparent execution trace - never an opaque answer.
 
 ---
 
@@ -44,19 +44,19 @@ interactive charts, and a transparent execution trace — never an opaque answer
 
 ## Highlights
 
-- **Multi-provider LLM** — Gemini, OpenAI, Anthropic, Ollama, OpenRouter, Groq,
+- **Multi-provider LLM** - Gemini, OpenAI, Anthropic, Ollama, OpenRouter, Groq,
   Cerebras, or any OpenAI-compatible endpoint. Swap with 4 lines in `.env`.
-- **Read-only by construction** — the SQL layer rejects anything that isn't
+- **Read-only by construction** - the SQL layer rejects anything that isn't
   `SELECT` or `WITH`. Verified at the DuckDB level, not by prompt.
-- **Transparent** — every run returns the SQL, Python, DAX, chart, assumptions,
+- **Transparent** - every run returns the SQL, Python, DAX, chart, assumptions,
   quality review, and a millisecond-timed execution trace.
-- **In-process data engine** — DuckDB reads CSV, Parquet, JSON, and connects to
+- **In-process data engine** - DuckDB reads CSV, Parquet, JSON, and connects to
   Postgres / MySQL / SQLite. No server, no ETL.
-- **Conversational** — follow-up questions reuse prior SQL and metrics.
-- **Filter-bar scoping** — constrain datasets by column before the LLM even sees
+- **Conversational** - follow-up questions reuse prior SQL and metrics.
+- **Filter-bar scoping** - constrain datasets by column before the LLM even sees
   them. Impossible to escape.
-- **Auditable** — every security-relevant action is logged.
-- **Local-first** — SQLite for app metadata. Zero infra required.
+- **Auditable** - every security-relevant action is logged.
+- **Local-first** - SQLite for app metadata. Zero infra required.
 
 ---
 
@@ -110,7 +110,7 @@ interactive charts, and a transparent execution trace — never an opaque answer
 | **Execution** | Docker sandbox (optional) or local subprocess |
 | **Database** | SQLite via SQLAlchemy 2.0 async |
 | **Auth** | JWT (HS256) + bcrypt |
-| **Email** | aiosmtplib (SMTP — Gmail / SendGrid / Mailgun / SES / etc.) |
+| **Email** | aiosmtplib (SMTP - Gmail / SendGrid / Mailgun / SES / etc.) |
 | **Rate limiting** | slowapi (memory:// or Redis) |
 | **Frontend** | React 19 + Vite 6 + TypeScript 5.7 |
 | **Styling** | Tailwind CSS v4 |
@@ -197,9 +197,9 @@ Open http://localhost:5173.
 | Variable | Default | Purpose |
 |---|---|---|
 | `LLM_PROVIDER` | `gemini` | `gemini` \| `openai` \| `anthropic` \| `ollama` \| `openai_compatible` |
-| `LLM_API_KEY` | — | Provider API key |
+| `LLM_API_KEY` | - | Provider API key |
 | `LLM_MODEL` | `gemini-2.5-flash` | Model identifier |
-| `LLM_BASE_URL` | — | Required for `openai_compatible` and `ollama` |
+| `LLM_BASE_URL` | - | Required for `openai_compatible` and `ollama` |
 | `LLM_TEMPERATURE` | `0` | Sampling temperature |
 | `LLM_MAX_TOKENS` | `8192` | Max output tokens |
 
@@ -210,7 +210,7 @@ Open http://localhost:5173.
 | `APP_NAME` | AI Data Analyst | Display name |
 | `APP_ENV` | `development` | Environment |
 | `APP_DEBUG` | `true` | Enables `/docs` and verbose errors |
-| `SECRET_KEY` | — | Derived for credential encryption |
+| `SECRET_KEY` | - | Derived for credential encryption |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed origins |
 | `DISPLAY_TIMEZONE` | `Asia/Kolkata` | ISO timezone for timestamps |
 | `LOG_LEVEL` | `INFO` | Structured log level |
@@ -254,7 +254,7 @@ Open http://localhost:5173.
 | Variable | Default | Purpose |
 |---|---|---|
 | `AUTH_ENABLED` | `false` | `false` = single-user anonymous mode |
-| `JWT_SECRET_KEY` | — | JWT signing key (rotate in production) |
+| `JWT_SECRET_KEY` | - | JWT signing key (rotate in production) |
 | `JWT_ALGORITHM` | `HS256` | JWT algorithm |
 | `JWT_ACCESS_TOKEN_MINUTES` | `1440` | Token lifetime (24h) |
 | `AUTH_MIN_PASSWORD_LENGTH` | `8` | Min password length |
@@ -266,11 +266,11 @@ Open http://localhost:5173.
 | Variable | Default | Purpose |
 |---|---|---|
 | `SMTP_ENABLED` | `false` | `true` emails reset links; `false` logs them |
-| `SMTP_HOST` | — | e.g. `smtp.gmail.com` |
+| `SMTP_HOST` | - | e.g. `smtp.gmail.com` |
 | `SMTP_PORT` | `587` | 587 (STARTTLS), 465 (SSL), 25 (plain) |
-| `SMTP_USERNAME` | — | SMTP user |
-| `SMTP_PASSWORD` | — | SMTP password or app password |
-| `SMTP_FROM_EMAIL` | — | From address |
+| `SMTP_USERNAME` | - | SMTP user |
+| `SMTP_PASSWORD` | - | SMTP password or app password |
+| `SMTP_FROM_EMAIL` | - | From address |
 | `SMTP_FROM_NAME` | AI Data Analyst | From display name |
 | `SMTP_USE_TLS` | `true` | STARTTLS |
 | `SMTP_USE_SSL` | `false` | Implicit TLS |
@@ -329,9 +329,9 @@ column chips.
 
 Click **Connect source** to open the connection wizard:
 
-- **PostgreSQL** — also works for Aurora PG, Azure Database for PostgreSQL
-- **MySQL / MariaDB** — also works for Aurora MySQL
-- **SQLite** — point at a `.db` file
+- **PostgreSQL** - also works for Aurora PG, Azure Database for PostgreSQL
+- **MySQL / MariaDB** - also works for Aurora MySQL
+- **SQLite** - point at a `.db` file
 
 Credentials are encrypted at rest with a Fernet key derived from `SECRET_KEY`.
 Never stored in plaintext.
@@ -345,7 +345,7 @@ On save, the connector:
 
 At query time, each remote table is exposed as a local view with a sanitized
 name like `public_orders_1a2b3c`. This means **cross-source joins work out of the
-box** — the LLM sees a flat namespace.
+box** - the LLM sees a flat namespace.
 
 ---
 
@@ -368,17 +368,17 @@ emits a Server-Sent Event that the frontend renders live.
 | 8. Narrative | Narrative Agent | Streams the human-readable answer token by token |
 | 9. Quality | Quality Agent | Reviews the answer against the rows; flags issues |
 | 10. Trace | Orchestrator | Emits the full execution timeline |
-| — | Persist | Writes everything to `analysis_runs` |
+| - | Persist | Writes everything to `analysis_runs` |
 
 The workspace shows:
 
-- **Agent rail** — each step with spinner → checkmark, elapsed time
-- **Answer card** — summary, findings, caveats, confidence badge
-- **KPI cards** — when the answer is a scalar or has a trend
-- **Chart** — with a data-table toggle
-- **SQL card** — the generated query with a `validated` chip
-- **Python card** — the generated pandas script
-- **DAX card** — the Power BI equivalent
+- **Agent rail** - each step with spinner → checkmark, elapsed time
+- **Answer card** - summary, findings, caveats, confidence badge
+- **KPI cards** - when the answer is a scalar or has a trend
+- **Chart** - with a data-table toggle
+- **SQL card** - the generated query with a `validated` chip
+- **Python card** - the generated pandas script
+- **DAX card** - the Power BI equivalent
 
 **Streaming:** The narrative is streamed token by token. A live "writing…" card
 appears with a blinking cyan caret. When the structured answer lands, it
@@ -432,13 +432,13 @@ result:
 | "What is the total?" | Table (single row) |
 
 Every chart has:
-- A **data table** toggle — shows the exact rows behind the chart
-- **CSV** export — downloads the underlying data
-- **PNG** export — renders the SVG to a 2× PNG on a navy background
+- A **data table** toggle - shows the exact rows behind the chart
+- **CSV** export - downloads the underlying data
+- **PNG** export - renders the SVG to a 2× PNG on a navy background
 
 **KPI cards:** when the result is a single row (all numerics become cards) or a
 time series with a KPI-style question (single card with a sparkline), KPI cards
-appear above the chart. No LLM call — pure Python detection.
+appear above the chart. No LLM call - pure Python detection.
 
 ---
 
@@ -454,7 +454,7 @@ Add filters like:
 
 **How it works:** filters are applied at the **DuckDB view level**, not by
 prompt. Each table is registered as a hidden `__raw` view plus a filtered view
-that the agent sees. The LLM literally cannot escape the filter — the raw data
+that the agent sees. The LLM literally cannot escape the filter - the raw data
 is not addressable.
 
 **Persistence:** filters live in the URL as base64 JSON (`?f=...`). Refresh,
@@ -472,8 +472,8 @@ both are filtered.
 **Location:** implicit in the workspace
 
 Every question gets a `conversation_id` (stored in the URL as `?c=...`).
-Follow-up questions in the same conversation see the **last 3 turns** —
-question + SQL + row count — injected as a compact block into the SQL agent's
+Follow-up questions in the same conversation see the **last 3 turns** -
+question + SQL + row count - injected as a compact block into the SQL agent's
 prompt.
 
 Example:
@@ -497,7 +497,7 @@ conversation ID.
 
 ### DAX generation
 
-Every run generates the Power BI DAX equivalent of the SQL — either a
+Every run generates the Power BI DAX equivalent of the SQL - either a
 **measure** (scalar question) or a **calculated table** (grouped question).
 
 Example for "Show total revenue by region":
@@ -516,7 +516,7 @@ The DAX card and inspector tab include:
 - **`.dax`** download
 - A **"How to use in Power BI"** hint with paste instructions
 
-DAX is **not executed** — it's a starting point for a Power BI model. Table and
+DAX is **not executed** - it's a starting point for a Power BI model. Table and
 column names come from the DuckDB schema; you may need to rename them in your
 Power BI model.
 
@@ -556,11 +556,11 @@ prefix.
 
 Reusable analysis playbooks. Two kinds:
 
-- **Built-in** — 10 seeded templates (revenue diagnostics, top-N performers,
+- **Built-in** - 10 seeded templates (revenue diagnostics, top-N performers,
   time series trend, distribution check, segment comparison, data quality scan,
   period-over-period, correlation analysis, anomaly detection, customer
   segmentation). Read-only.
-- **Custom** — your own, fully editable, private to your account.
+- **Custom** - your own, fully editable, private to your account.
 
 Each template has: name, description, question, tags.
 
@@ -568,7 +568,7 @@ Click **Use** to run the template in the workspace. The usage counter
 increments.
 
 **On Home:** the top 3 most-used templates appear below the profile-derived
-suggestions — only if you've used at least one template.
+suggestions - only if you've used at least one template.
 
 ---
 
@@ -580,11 +580,11 @@ The business glossary. Define what "Revenue", "Gross margin", "Active customer"
 mean in your organization. Every subsequent question uses these definitions.
 
 Each metric has:
-- **Name** — canonical term (e.g. "Revenue")
-- **Category** — grouping (e.g. "Financial")
-- **Synonyms** — alternate ways users might phrase it ("sales", "turnover")
-- **Description** — what it means
-- **SQL expression** — suggested structure for the LLM
+- **Name** - canonical term (e.g. "Revenue")
+- **Category** - grouping (e.g. "Financial")
+- **Synonyms** - alternate ways users might phrase it ("sales", "turnover")
+- **Description** - what it means
+- **SQL expression** - suggested structure for the LLM
 
 **6 built-in metrics** are seeded on startup:
 
@@ -621,12 +621,12 @@ Every run persists to SQLite with:
 **List view:** color-coded status, relative timestamp, elapsed time, dataset
 count. Filter by conversation, click to open detail.
 
-**Detail view:** the same inspector experience as the workspace — SQL, Python,
+**Detail view:** the same inspector experience as the workspace - SQL, Python,
 DAX, Trace, Assumptions tabs. Plus:
-- **Re-run** button — opens the workspace with the same question
-- **Full CSV** — re-runs the SQL and downloads all rows (not capped at 500)
-- **JSON** — downloads the entire run as formatted JSON
-- **Delete** — with confirmation
+- **Re-run** button - opens the workspace with the same question
+- **Full CSV** - re-runs the SQL and downloads all rows (not capped at 500)
+- **JSON** - downloads the entire run as formatted JSON
+- **Delete** - with confirmation
 
 ---
 
@@ -675,7 +675,7 @@ Every generated artifact is exportable:
 | Python script | `.py` | Inspector Python tab |
 | DAX expression | `.dax` | Inspector DAX tab |
 | Full run | JSON | History detail |
-| All rows | CSV | History detail (**Full CSV** — re-runs SQL) |
+| All rows | CSV | History detail (**Full CSV** - re-runs SQL) |
 
 Filenames are timestamped and sanitized for cross-platform safety.
 
@@ -687,16 +687,16 @@ Filenames are timestamped and sanitized for cross-platform safety.
 
 The palette searches and navigates:
 
-- **Navigation** — Home, Sources, Workspace, History, Templates, Metrics,
+- **Navigation** - Home, Sources, Workspace, History, Templates, Metrics,
   Audit, Settings
-- **Recent runs** — click any past question to open its detail view
-- **Templates** — click to run in the workspace
-- **Actions** — Toggle inspector, new analysis
+- **Recent runs** - click any past question to open its detail view
+- **Templates** - click to run in the workspace
+- **Actions** - Toggle inspector, new analysis
 
 **Keyboard:**
-- `↑` / `↓` — navigate (auto-scrolls to keep the active row visible)
-- `↵` — execute
-- `ESC` — close
+- `↑` / `↓` - navigate (auto-scrolls to keep the active row visible)
+- `↵` - execute
+- `ESC` - close
 
 ---
 
@@ -706,23 +706,23 @@ The palette searches and navigates:
 
 Six sections:
 
-**Account** — username, email, active status, join date, sign-out (when auth
+**Account** - username, email, active status, join date, sign-out (when auth
 is enabled). Shows a single-user mode message when auth is off.
 
-**LLM Provider** — provider name, model, temperature, max tokens. No API key
+**LLM Provider** - provider name, model, temperature, max tokens. No API key
 exposure. Note explains how to swap providers via `.env`.
 
-**Execution limits** — max upload size, max rows per query, query timeout,
+**Execution limits** - max upload size, max rows per query, query timeout,
 sandbox mode (Docker vs local subprocess), max concurrent runs.
 
-**Storage & activity** — four stat cards (datasets, sources, runs,
+**Storage & activity** - four stat cards (datasets, sources, runs,
 conversations) plus total bytes on disk for uploads and artifacts.
 
-**System** — app version, environment, display timezone.
+**System** - app version, environment, display timezone.
 
-**Danger zone** — two destructive actions, both with confirmation:
-- **Clear run history** — deletes all `AnalysisRun` rows
-- **Delete all datasets** — deletes all `Dataset` rows and their files
+**Danger zone** - two destructive actions, both with confirmation:
+- **Clear run history** - deletes all `AnalysisRun` rows
+- **Delete all datasets** - deletes all `Dataset` rows and their files
 
 ---
 
@@ -731,10 +731,10 @@ conversations) plus total bytes on disk for uploads and artifacts.
 **Toggle:** `AUTH_ENABLED=true` in `.env`
 
 When enabled:
-- **Register** — email, username, password (min length from config)
-- **Login** — accepts username OR email
-- **JWT** — stored in localStorage, sent as `Authorization: Bearer <token>`
-- **Per-user scoping** — every dataset, source, run, template, metric belongs
+- **Register** - email, username, password (min length from config)
+- **Login** - accepts username OR email
+- **JWT** - stored in localStorage, sent as `Authorization: Bearer <token>`
+- **Per-user scoping** - every dataset, source, run, template, metric belongs
   to one user
 
 **Rate limiting:**
@@ -745,14 +745,14 @@ When enabled:
 
 **Password reset flow:**
 
-1. `/forgot-password` — enter email
+1. `/forgot-password` - enter email
 2. Backend generates a 32-byte URL-safe token, stores only its SHA-256 hash
 3. If SMTP is configured, emails the reset link
 4. If SMTP is off, logs the link to the server console
 5. Link goes to `/reset-password?token=...`
 6. Token is single-use, expires in 30 minutes
 
-**Email enumeration is impossible** — the forgot endpoint always returns 200
+**Email enumeration is impossible** - the forgot endpoint always returns 200
 regardless of whether the email exists.
 
 **Email delivery (SMTP):**
@@ -781,14 +781,14 @@ prior conversation context.
 - Uses JSON-mode LLM output
 - Validates with `EXPLAIN` before executing
 - On error, re-prompts once with the parser error message
-- Never emits writes — the DuckDB layer rejects them independently
+- Never emits writes - the DuckDB layer rejects them independently
 
 ### Python Agent
 
 **File:** `backend/app/agents/python_agent.py`
 
 Writes a compact pandas script for deeper analysis. The script is **not
-executed here** — the orchestrator hands it to the sandbox separately so the
+executed here** - the orchestrator hands it to the sandbox separately so the
 agent stays pure.
 
 ### DAX Agent
@@ -811,9 +811,9 @@ the LLM returns garbage, so a chart always renders.
 **File:** `backend/app/agents/narrative.py`
 
 Turns rows into a human-readable answer. Two modes:
-- **Streaming** — token-by-token, in a strict text format
+- **Streaming** - token-by-token, in a strict text format
   (summary + `FINDINGS:` + `CAVEATS:`)
-- **Fallback** — one-shot JSON if streaming fails
+- **Fallback** - one-shot JSON if streaming fails
 
 The prompt hard-restricts the model to facts visible in the rows.
 
@@ -829,7 +829,7 @@ Reviews the answer against the rows:
 
 **File:** `backend/app/agents/kpi.py`
 
-Deterministic detection — no LLM call. Rules:
+Deterministic detection - no LLM call. Rules:
 1. Single row → one card per numeric column
 2. Time series + KPI-style question + one numeric column → one card with a
    sparkline
@@ -879,7 +879,7 @@ Deterministic detection — no LLM call. Rules:
 
 - System prompts are separated from user content
 - Tool outputs are validated before reuse
-- Schema is authoritative — the LLM is instructed not to invent columns
+- Schema is authoritative - the LLM is instructed not to invent columns
 
 ---
 
@@ -1094,10 +1094,10 @@ services:
 
 ### One-click deploy recipes
 
-- **Railway** — connect repo, set env vars, deploy
-- **Fly.io** — `fly launch`, mount a volume at `/app/data`, set env vars
-- **Render** — Web Service + Persistent Disk
-- **Fly.io + Vercel** — backend on Fly, frontend on Vercel
+- **Railway** - connect repo, set env vars, deploy
+- **Fly.io** - `fly launch`, mount a volume at `/app/data`, set env vars
+- **Render** - Web Service + Persistent Disk
+- **Fly.io + Vercel** - backend on Fly, frontend on Vercel
 
 ---
 
@@ -1121,7 +1121,7 @@ services:
 - Edit-and-run (Monaco, diff, save-to-history)
 - Settings, system info, danger zone
 
-**Planned (Group 2 — Intelligence)**
+**Planned (Group 2 - Intelligence)**
 
 - "Explain this SQL" button
 - "Why this query" explanations
@@ -1131,7 +1131,7 @@ services:
 - Anomaly detection agent
 - Auto-dashboard
 
-**Planned (Group 3 — UX polish)**
+**Planned (Group 3 - UX polish)**
 
 - Dark/light theme toggle
 - SQL formatter
@@ -1143,13 +1143,13 @@ services:
 - Chart type override
 - Column-level drill-down
 
-**Planned (Group 4 — Governance)**
+**Planned (Group 4 - Governance)**
 
 - PII detection + column masking
 - Conversation threads in History
 - Webhooks
 
-**Planned (Group 5 — Advanced)**
+**Planned (Group 5 - Advanced)**
 
 - Multi-modal input (paste a chart image)
 
@@ -1179,9 +1179,9 @@ MIT -->
 
 Welcome to **Glassbox**.
 
-Right now, this repository isn't just a codebase — it's a construction site. The scaffolding is up, the foundation is poured, and the architect (that's me) is currently welding the core components together.
+Right now, this repository isn't just a codebase - it's a construction site. The scaffolding is up, the foundation is poured, and the architect (that's me) is currently welding the core components together.
 
-A **Glassbox** implies transparency — a system where you can see exactly how the gears turn. We are currently in the early, chaotic, and incredibly exciting phase of bringing this vision to life.
+A **Glassbox** implies transparency - a system where you can see exactly how the gears turn. We are currently in the early, chaotic, and incredibly exciting phase of bringing this vision to life.
 
 > [!WARNING]
 > **Work in Progress:** This project is under active development. Expect breaking changes, half-built features, and the occasional spark.
