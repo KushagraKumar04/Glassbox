@@ -317,7 +317,7 @@ async def forgot_password(
         try:
             await sender.send(
                 to=user.email,
-                subject="Reset your AI Data Analyst password",
+                subject="Reset your Glassbox password",
                 html=html,
                 text=text,
             )
