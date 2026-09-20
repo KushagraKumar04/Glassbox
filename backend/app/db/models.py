@@ -61,3 +61,75 @@ def _iso_local(dt: datetime | None) -> str | None:
     return dt.astimezone(_display_tz()).isoformat()
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Safe JSON serialization
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _json_default(o: Any) -> Any:
+    """Fallback for json.dumps — handles datetimes, Decimals, numpy, sets."""
+    if isinstance(o, (_dt.datetime, _dt.date, _dt.time)):
+        return o.isoformat()
+
+    if isinstance(o, decimal.Decimal):
+        return float(o)
+
+    if isinstance(o, (set, frozenset)):
+        return list(o)
+
+    if hasattr(o, "item"):  # numpy scalars
+        try:
+            return o.item()
+        except Exception:
+            pass
+
+    if isinstance(o, (bytes, bytearray)):
+        try:
+            return o.decode("utf-8")
+        except Exception:
+            return o.decode("utf-8", errors="replace")
+
+    return str(o)
+
+
+def _safe_dumps(obj: Any) -> str:
+    return _json.dumps(obj, default=_json_default)
+
+
+class _SafeJSON(TypeDecorator):
+    """
+    JSON column that never fails on Timestamp / Decimal / numpy scalars.
+    Backed by the same storage as sqlalchemy.JSON.
+    """
+
+    impl = JSON
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+
+        # Serialize to string here so SQLAlchemy never sees the raw dict
+        return _safe_dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+
+        if isinstance(value, (dict, list)):
+            return value
+
+        try:
+            return _json.loads(value)
+        except Exception:
+            return value
+
+
+class Base(DeclarativeBase):
+    """Declarative base for all models."""
+    pass
+
+
+def _uuid() -> str:
+    return uuid.uuid4().hex
+
+
