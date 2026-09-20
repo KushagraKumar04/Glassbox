@@ -6,9 +6,6 @@
    :root defaults to dark; [data-theme="light"] overrides.
    ═══════════════════════════════════════════════════════════════ */
 
-  /* Accents */
-  --color-cyan: #22d3ee;
-  --color-violet: #8b5cf6;
 
   /* Status */
   --color-ok: #34d399;
