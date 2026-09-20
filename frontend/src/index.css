@@ -5,10 +5,6 @@
    Every theme-dependent value lives here as a CSS variable.
    :root defaults to dark; [data-theme="light"] overrides.
    ═══════════════════════════════════════════════════════════════ */
-@theme {
-  /* Surfaces */
-  --color-bg: #0b1020;
-  --color-panel: #111827;
 
   /* Accents */
   --color-cyan: #22d3ee;
