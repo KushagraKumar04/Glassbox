@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 8192
 
     # ── App ─────────────────────────────────────────────────
-    app_name: str = "AI Data Analyst"
+    app_name: str = "Glassbox"
     app_env: str = "development"
     app_debug: bool = True
     app_host: str = "0.0.0.0"
