@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════
-   DESIGN TOKENS  (PRD §7.2)
+   THEME TOKENS
+   Every theme-dependent value lives here as a CSS variable.
+   :root defaults to dark; [data-theme="light"] overrides.
    ═══════════════════════════════════════════════════════════════ */
 @theme {
   /* Surfaces */
