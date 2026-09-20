@@ -6,6 +6,12 @@
    :root defaults to dark; [data-theme="light"] overrides.
    ═══════════════════════════════════════════════════════════════ */
 
+:root,
+[data-theme="dark"] {
+  --aida-bg: #0b1020;
+  --aida-txt: #e8eef8;
+  --aida-muted: #aab6cc;
+  --aida-panel: #111827;
 
   /* Status */
   --color-ok: #34d399;
