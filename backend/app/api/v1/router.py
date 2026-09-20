@@ -7,6 +7,7 @@ from app.api.v1 import (
     chat,
     columns,
     conversations,
+    dashboard,
     datasets,
     drilldown,
     execute,
