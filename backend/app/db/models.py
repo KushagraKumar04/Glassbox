@@ -134,6 +134,59 @@ def _uuid() -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  User
+# ═══════════════════════════════════════════════════════════════════════════
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "email": self.email,
+            "username": self.username,
+            "is_active": self.is_active,
+            "is_superuser": self.is_superuser,
+            "created_at": _iso_local(self.created_at),
+        }
+
+
+class PasswordResetToken(Base):
+    """
+    One-time password reset token.
+
+    The raw token is never stored — only its SHA-256 hash. If the DB
+    leaks, the hashes are useless without brute-forcing 32 bytes of entropy.
+
+    Single-use: `used_at` is set on success. Expires after
+    AUTH_RESET_TOKEN_MINUTES.
+    """
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(
+        String(32),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+    
+# ═══════════════════════════════════════════════════════════════════════════
 #  Template — a saved prompt / analysis playbook
 # ═══════════════════════════════════════════════════════════════════════════
 
