@@ -133,3 +133,53 @@ def _uuid() -> str:
     return uuid.uuid4().hex
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  Metric — a business glossary term
+# ═══════════════════════════════════════════════════════════════════════════
+
+class Metric(Base):
+    """
+    A named business metric. The SQL agent uses these definitions when
+    generating queries, so "revenue" always means the same thing inside
+    one workspace.
+
+    Built-in metrics (user_id=None, is_builtin=True) are seeded on startup
+    as ready-made examples. Users can edit / delete their own metrics and
+    add new ones.
+    """
+    __tablename__ = "metrics"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    user_id: Mapped[str | None] = mapped_column(
+        String(32), index=True, nullable=True
+    )
+
+    name: Mapped[str] = mapped_column(String(120), index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+
+    # Optional SQL fragment the LLM should prefer, e.g. "SUM(amount)"
+    sql_expression: Mapped[str] = mapped_column(Text, default="")
+
+    # Synonyms the user might type instead of `name`
+    synonyms: Mapped[list] = mapped_column(_SafeJSON, default=list)
+
+    category: Mapped[str] = mapped_column(String(64), default="", index=True)
+
+    is_builtin: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "description": self.description,
+            "sql_expression": self.sql_expression,
+            "synonyms": self.synonyms or [],
+            "category": self.category,
+            "is_builtin": self.is_builtin,
+            "created_at": _iso_local(self.created_at),
+        }
