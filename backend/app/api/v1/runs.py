@@ -71,6 +71,34 @@ async def get_run(
     return run.to_full()
 
 
+@router.post("/{run_id}/pin")
+async def pin_run(
+    run_id: str,
+    req: PinRequest,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Toggle the pinned flag on a run. Stamps pinned_at when pinning."""
+    from datetime import datetime
+
+    run = await session.get(AnalysisRun, run_id)
+    if not run or run.user_id != user.id:
+        raise HTTPException(404, "Run not found")
+
+    run.pinned = bool(req.pinned)
+    run.pinned_at = datetime.utcnow() if req.pinned else None
+    await session.commit()
+    await session.refresh(run)
+
+    log.info(
+        "run_pinned_toggled",
+        run_id=run.id,
+        pinned=run.pinned,
+        user_id=user.id,
+    )
+    return run.to_summary()
+
+
 @router.get("/{run_id}/export.json")
 async def export_run_json(
     run_id: str,
