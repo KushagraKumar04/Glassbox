@@ -134,6 +134,46 @@ def _uuid() -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  Template — a saved prompt / analysis playbook
+# ═══════════════════════════════════════════════════════════════════════════
+
+class Template(Base):
+    __tablename__ = "templates"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    # NULL = built-in (visible to everyone); UUID = user-owned
+    user_id: Mapped[str | None] = mapped_column(
+        String(32), index=True, nullable=True
+    )
+
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    question: Mapped[str] = mapped_column(Text)
+
+    # Freeform tags — JSON array of short strings
+    tags: Mapped[list] = mapped_column(_SafeJSON, default=list)
+
+    is_builtin: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    usage_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "description": self.description,
+            "question": self.question,
+            "tags": self.tags or [],
+            "is_builtin": self.is_builtin,
+            "usage_count": self.usage_count,
+            "created_at": _iso_local(self.created_at),
+        }
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  Metric — a business glossary term
 # ═══════════════════════════════════════════════════════════════════════════
 
