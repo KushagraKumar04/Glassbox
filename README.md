@@ -1254,62 +1254,7 @@ Glassbox is being forged with modern, industry-standard technologies and an arch
 | 🌿 Version Control | Git & GitHub                                       |
 | 🧩 Architecture    | Modular, scalable design                           |
 
----
 
-## ⚡ Getting Your Hands Dirty
-
-Want to watch the construction happen in real time?
-
-You can spin up the project locally.
-
-> **Note:** Glassbox is currently under active development. Some features may be incomplete, APIs may change, and bugs may occasionally bite.
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/KushagraKumar04/Glassbox.git
-cd Glassbox
-```
-
-### 2. Configure Your Environment
-
-```bash
-cp .env.example .env
-```
-
-Update `.env` with the required configuration values.
-
-### 3. Install Frontend Dependencies
-
-```bash
-cd frontend
-npm install
-```
-
-### 4. Start the Frontend
-
-```bash
-npm run dev
-```
-
-### 5. Install Backend Dependencies
-
-Open another terminal:
-
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-### 6. Start the Backend
-
-```bash
-python main.py
-```
-
-> **Windows users:** If `cp` is unavailable, manually copy `.env.example` to `.env`.
-
----
 
 ## 🗺️ The Roadmap to Reality
 
