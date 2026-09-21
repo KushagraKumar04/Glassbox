@@ -15,6 +15,7 @@ from app.db.models import AnalysisRun, User
 from app.db.session import get_session
 from app.dependencies.auth import get_current_user
 from app.services.orchestrator import load_duckdb_for_datasets
+from app.schemas import PinRequest
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 log = structlog.get_logger()
@@ -32,6 +33,27 @@ async def list_runs(
         select(AnalysisRun)
         .where(AnalysisRun.user_id == user.id)
         .order_by(AnalysisRun.created_at.desc())
+        .limit(limit)
+    )
+    return [r.to_summary() for r in result.scalars().all()]
+
+
+# ── Pinned list (MUST come before /{run_id}) ─────────────────
+
+@router.get("/pinned")
+async def list_pinned_runs(
+    limit: int = Query(default=12, ge=1, le=50),
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """List pinned runs, newest-pinned first."""
+    result = await session.execute(
+        select(AnalysisRun)
+        .where(
+            AnalysisRun.user_id == user.id,
+            AnalysisRun.pinned.is_(True),
+        )
+        .order_by(AnalysisRun.pinned_at.desc().nullslast())
         .limit(limit)
     )
     return [r.to_summary() for r in result.scalars().all()]
