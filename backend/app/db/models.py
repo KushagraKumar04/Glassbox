@@ -276,3 +276,68 @@ class Metric(Base):
             "is_builtin": self.is_builtin,
             "created_at": _iso_local(self.created_at),
         }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  AuditEvent — a security-relevant action
+# ═══════════════════════════════════════════════════════════════════════════
+
+class AuditEvent(Base):
+    """
+    Append-only log of security-relevant actions.
+
+    Written by `app.core.audit.audit()`. Never updated, never deleted
+    except by the retention pruner.
+
+    Details:
+      - user_id is NULL for anonymous or pre-login events
+      - username is denormalized for display even after user deletion
+      - details is free-form JSON (never contains secrets)
+    """
+    __tablename__ = "audit_events"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+
+    user_id: Mapped[str | None] = mapped_column(
+        String(32), index=True, nullable=True
+    )
+    # Denormalized so the log remains readable after the user is deleted
+    username: Mapped[str] = mapped_column(String(255), default="")
+
+    # e.g. "auth.login", "dataset.upload", "source.create"
+    action: Mapped[str] = mapped_column(String(64), index=True)
+
+    # What was acted on (optional)
+    target_type: Mapped[str] = mapped_column(String(64), default="")
+    target_id: Mapped[str] = mapped_column(String(128), default="")
+
+    # Free-form context — never contains secrets
+    details: Mapped[dict] = mapped_column(_SafeJSON, default=dict)
+
+    ip: Mapped[str] = mapped_column(String(64), default="")
+    user_agent: Mapped[str] = mapped_column(String(512), default="")
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    # Composite index for the common (action + time) filter
+    __table_args__ = (
+        Index("ix_audit_action_created", "action", "created_at"),
+        Index("ix_audit_user_created", "user_id", "created_at"),
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "username": self.username,
+            "action": self.action,
+            "target_type": self.target_type,
+            "target_id": self.target_id,
+            "details": self.details or {},
+            "ip": self.ip,
+            "user_agent": self.user_agent,
+            "created_at": _iso_local(self.created_at),
+        }
+
