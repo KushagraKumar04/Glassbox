@@ -1,4 +1,4 @@
-<!-- # AI Data Analyst
+<!-- # Glassbox
 
 **Ask your data. Get the answer. See the proof.**
 
@@ -207,7 +207,7 @@ Open http://localhost:5173.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `APP_NAME` | AI Data Analyst | Display name |
+| `APP_NAME` | Glassbox | Display name |
 | `APP_ENV` | `development` | Environment |
 | `APP_DEBUG` | `true` | Enables `/docs` and verbose errors |
 | `SECRET_KEY` | - | Derived for credential encryption |
@@ -271,7 +271,7 @@ Open http://localhost:5173.
 | `SMTP_USERNAME` | - | SMTP user |
 | `SMTP_PASSWORD` | - | SMTP password or app password |
 | `SMTP_FROM_EMAIL` | - | From address |
-| `SMTP_FROM_NAME` | AI Data Analyst | From display name |
+| `SMTP_FROM_NAME` | Glassbox | From display name |
 | `SMTP_USE_TLS` | `true` | STARTTLS |
 | `SMTP_USE_SSL` | `false` | Implicit TLS |
 | `SMTP_TIMEOUT_SECONDS` | `15` | Send timeout |
