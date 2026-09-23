@@ -1165,7 +1165,7 @@ MIT -->
 ### *Transparency in Code. Power in Architecture.*
 
 [![Status](https://img.shields.io/badge/STATUS-UNDER%20CONSTRUCTION-orange?style=for-the-badge\&logo=githubactions\&logoColor=white)](#)
-[![Commits](https://img.shields.io/badge/COMMITS-91-blue?style=for-the-badge\&logo=git\&logoColor=white)](#)
+[![Commits](https://img.shields.io/badge/COMMITS-124-blue?style=for-the-badge\&logo=git\&logoColor=white)](#)
 [![Builder](https://img.shields.io/badge/BUILDER-KushagraKumar04-purple?style=for-the-badge\&logo=github\&logoColor=white)](#)
 [![Stars](https://img.shields.io/github/stars/KushagraKumar04/Glassbox?style=for-the-badge\&logo=github\&color=yellow)](https://github.com/KushagraKumar04/Glassbox)
 
