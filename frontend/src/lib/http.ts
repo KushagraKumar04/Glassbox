@@ -4,7 +4,7 @@
  */
 import { API_BASE } from "@/config/constants";
 import { tokenStore } from "@/features/auth/api";
-
+import { useGuestGate } from "@/features/auth/guest-gate";
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -21,9 +21,18 @@ function authHeaders(): Record<string, string> {
 
 function handleUnauthorized(): void {
   tokenStore.clear();
-  // Best-effort: force a full reload so the router re-bootstraps
   if (window.location.pathname !== "/login") {
     window.location.assign("/login");
+  }
+}
+
+function handleForbidden(res: Response, detail: string): void {
+  // Guest-mode "sign in to continue" → open the modal instead of hard-redirecting
+  if (
+    res.status === 403 &&
+    detail.toLowerCase().includes("sign in")
+  ) {
+    useGuestGate.getState().show(detail);
   }
 }
 
