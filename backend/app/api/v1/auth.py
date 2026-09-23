@@ -76,6 +76,7 @@ async def auth_config() -> dict:
     """Public — the frontend checks this to decide what to render."""
     return {
         "enabled": settings.auth_enabled,
+        "guest_mode": settings.guest_mode,
         "min_password_length": settings.auth_min_password_length,
         "email_enabled": settings.email_delivery_active,
     }
