@@ -91,6 +91,11 @@ export async function apiGet<T>(
   if (res.status === 429) {
     throw new ApiError(429, await parseRateLimitError(res));
   }
+  if (res.status === 403) {
+    const detail = await parseError(res);
+    handleForbidden(res, detail);
+    throw new ApiError(403, detail);
+  }
   if (!res.ok) throw new ApiError(res.status, await parseError(res));
   return res.json() as Promise<T>;
 }
