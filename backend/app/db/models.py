@@ -341,3 +341,314 @@ class AuditEvent(Base):
             "created_at": _iso_local(self.created_at),
         }
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  SqlExplanation — cached plain-English explanation of a SQL query
+# ═══════════════════════════════════════════════════════════════════════════
+
+class SqlExplanation(Base):
+    """
+    Deterministic cache keyed by the SHA-256 of the normalized SQL text.
+
+    The same generated query explained twice = one LLM call. Survives
+    backend restarts. Grows slowly (SQL text is high-entropy, so no user
+    will accumulate thousands of rows in practice).
+    """
+    __tablename__ = "sql_explanations"
+
+    sql_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    sql_text: Mapped[str] = mapped_column(Text)
+    # The full response payload: {summary, steps, tables, columns, assumptions, warnings}
+    response: Mapped[dict] = mapped_column(_SafeJSON, default=dict)
+    hit_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "sql_hash": self.sql_hash,
+            "response": self.response or {},
+            "hit_count": self.hit_count or 0,
+            "created_at": _iso_local(self.created_at),
+        }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  SqlRationale — cached "why this query" explanation
+# ═══════════════════════════════════════════════════════════════════════════
+
+class SqlRationale(Base):
+    """
+    Cache keyed by SHA-256 of (question + sql).
+
+    Different from SqlExplanation, which is keyed by SQL alone — the same
+    query asked against a different business question has a different
+    rationale.
+    """
+    __tablename__ = "sql_rationales"
+
+    cache_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    question: Mapped[str] = mapped_column(Text)
+    sql_text: Mapped[str] = mapped_column(Text)
+    response: Mapped[dict] = mapped_column(_SafeJSON, default=dict)
+    hit_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "cache_key": self.cache_key,
+            "response": self.response or {},
+            "hit_count": self.hit_count or 0,
+            "created_at": _iso_local(self.created_at),
+        }
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  NextQuestionsCache — cached follow-up suggestions
+# ═══════════════════════════════════════════════════════════════════════════
+
+class NextQuestionsCache(Base):
+    """
+    Cache keyed by SHA-256(question + sql + columns_signature).
+
+    Reopening the same run or re-asking the same question gets identical
+    suggestions without another LLM call.
+    """
+    __tablename__ = "next_questions_cache"
+
+    cache_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    question: Mapped[str] = mapped_column(Text)
+    suggestions: Mapped[list] = mapped_column(_SafeJSON, default=list)
+    hit_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "cache_key": self.cache_key,
+            "suggestions": self.suggestions or [],
+            "hit_count": self.hit_count or 0,
+            "created_at": _iso_local(self.created_at),
+        }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  AnomalyNarrativesCache — cached LLM descriptions of anomalies
+# ═══════════════════════════════════════════════════════════════════════════
+
+class AnomalyNarrativesCache(Base):
+    """
+    Cache keyed by SHA-256(sql + column + value + method).
+
+    Anomalies themselves are computed deterministically every time (cheap,
+    no LLM). Only the human-readable description is cached.
+    """
+    __tablename__ = "anomaly_narratives_cache"
+
+    cache_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    response: Mapped[dict] = mapped_column(_SafeJSON, default=dict)
+    hit_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Dataset — an uploaded file or a connected source
+# ═══════════════════════════════════════════════════════════════════════════
+
+class Dataset(Base):
+    __tablename__ = "datasets"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    user_id: Mapped[str | None] = mapped_column(String(32), index=True, nullable=True)
+    # Name is unique *per user*, not globally. Enforced via composite index.
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    table_name: Mapped[str] = mapped_column(String(255), index=True)
+    file_path: Mapped[str] = mapped_column(Text)
+    file_type: Mapped[str] = mapped_column(String(16))  # csv | parquet | json
+    row_count: Mapped[int] = mapped_column(Integer, default=0)
+    column_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Full profile: columns, types, null rates, sample rows, cardinality
+    profile: Mapped[dict] = mapped_column(_SafeJSON, default=dict)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "table_name": self.table_name,
+            "file_type": self.file_type,
+            "row_count": self.row_count,
+            "column_count": self.column_count,
+            "profile": self.profile,
+            "created_at": _iso_local(self.created_at),
+        }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# AnalysisRun — one question → one run
+# ═══════════════════════════════════════════════════════════════════════════
+
+class AnalysisRun(Base):
+    __tablename__ = "analysis_runs"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    user_id: Mapped[str | None] = mapped_column(String(32), index=True, nullable=True)
+    # Groups follow-up runs into a conversation thread. NULL for one-off runs.
+    conversation_id: Mapped[str | None] = mapped_column(
+        String(32), index=True, nullable=True
+    )
+    question: Mapped[str] = mapped_column(Text)
+
+    # pending | running | completed | failed
+    status: Mapped[str] = mapped_column(String(24), default="pending", index=True)
+
+    # Generated artifacts
+    sql_text: Mapped[str] = mapped_column(Text, default="")
+    python_text: Mapped[str] = mapped_column(Text, default="")
+    # Power BI / SSAS Tabular equivalent of the SQL — read-only, copyable
+    dax_text: Mapped[str] = mapped_column(Text, default="")
+    # Full answer payload serialized as JSON: {"summary", "findings", "caveats"}
+    answer: Mapped[str] = mapped_column(Text, default="")
+
+    # JSON payloads
+    chart_spec: Mapped[dict] = mapped_column(_SafeJSON, default=dict)
+    trace: Mapped[list] = mapped_column(_SafeJSON, default=list)
+    dataset_ids: Mapped[list] = mapped_column(_SafeJSON, default=list)
+    source_ids: Mapped[list] = mapped_column(_SafeJSON, default=list)
+    error: Mapped[str] = mapped_column(Text, default="")
+
+    # Pinning — user-starred runs surface on Home
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    pinned_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True, index=True
+    )
+
+    elapsed_ms: Mapped[int] = mapped_column(Integer, default=0)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+
+    def _parsed_answer(self) -> dict:
+        """
+        Return the full answer payload.
+        Handles both the new JSON format and the legacy plain-summary string.
+        """
+        import json as _j
+
+        raw = self.answer or ""
+        if not raw:
+            return {"summary": "", "findings": [], "caveats": []}
+        try:
+            parsed = _j.loads(raw)
+            if isinstance(parsed, dict) and "summary" in parsed:
+                return parsed
+        except (ValueError, TypeError):
+            pass
+        return {"summary": raw, "findings": [], "caveats": []}
+
+    def to_summary(self) -> dict:
+        return {
+            "id": self.id,
+            "conversation_id": self.conversation_id,
+            "question": self.question,
+            "status": self.status,
+            "elapsed_ms": self.elapsed_ms,
+            "dataset_count": len(self.dataset_ids or []),
+            "source_count": len(self.source_ids or []),
+            "pinned": bool(self.pinned),
+            "pinned_at": _iso_local(self.pinned_at),
+            "created_at": _iso_local(self.created_at),
+        }
+
+    def to_full(self) -> dict:
+        return {
+            **self.to_summary(),
+            "sql_text": self.sql_text or "",
+            "python_text": self.python_text or "",
+            "dax_text": self.dax_text or "",
+            "answer": self._parsed_answer(),
+            "chart_spec": self.chart_spec or {},
+            "trace": self.trace or [],
+            "dataset_ids": self.dataset_ids or [],
+            "source_ids": self.source_ids or [],
+            "error": self.error or "",
+            "completed_at": _iso_local(self.completed_at),
+        }
+
+    
+# ═══════════════════════════════════════════════════════════════════════════
+#  DataSource — a connection to a remote database
+# ═══════════════════════════════════════════════════════════════════════════
+
+class DataSource(Base):
+    """
+    Live connection metadata for a remote database.
+
+    Credentials are stored encrypted in `password_enc`. Plaintext never
+    touches the DB.
+
+    Supported kinds:
+      - postgres    (Postgres, Aurora PG, Azure Database for PostgreSQL, Redshift-compatible)
+      - mysql       (MySQL, MariaDB, Aurora MySQL)
+      - sqlite      (local .db / .sqlite file)
+
+    The `tables` field caches the discovered schema so the UI can show it
+    without re-connecting on every page load.
+    """
+    __tablename__ = "data_sources"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    user_id: Mapped[str | None] = mapped_column(String(32), index=True, nullable=True)
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    kind: Mapped[str] = mapped_column(String(32), index=True)
+
+    host: Mapped[str] = mapped_column(String(255), default="")
+    port: Mapped[int] = mapped_column(Integer, default=0)
+    database: Mapped[str] = mapped_column(String(512), default="")
+    username: Mapped[str] = mapped_column(String(255), default="")
+    password_enc: Mapped[str] = mapped_column(Text, default="")
+    ssl_mode: Mapped[str] = mapped_column(String(24), default="prefer")
+
+    # Discovered schema snapshot (list of {schema, name, columns:[...]})
+    tables: Mapped[list] = mapped_column(_SafeJSON, default=list)
+
+    # Connection health
+    status: Mapped[str] = mapped_column(String(24), default="unknown", index=True)
+    last_error: Mapped[str] = mapped_column(Text, default="")
+    last_tested_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow, index=True
+    )
+
+    def to_dict(self, *, include_tables: bool = True) -> dict:
+        d = {
+            "id": self.id,
+            "name": self.name,
+            "kind": self.kind,
+            "host": self.host,
+            "port": self.port,
+            "database": self.database,
+            "username": self.username,
+            "ssl_mode": self.ssl_mode,
+            "status": self.status,
+            "last_error": self.last_error,
+            "last_tested_at": _iso_local(self.last_tested_at),
+            "created_at": _iso_local(self.created_at),
+            "table_count": len(self.tables or []),
+        }
+        if include_tables:
+            d["tables"] = self.tables or []
+        return d

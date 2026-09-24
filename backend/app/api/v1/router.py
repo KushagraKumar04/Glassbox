@@ -14,6 +14,7 @@ from app.api.v1 import (
     explain,
     health,
     metrics,
+    news,
     runs,
     sources,
     suggestions,
@@ -39,3 +40,4 @@ api_router.include_router(execute.router)
 api_router.include_router(explain.router)
 api_router.include_router(system.router)
 api_router.include_router(audit.router)
+api_router.include_router(news.router)

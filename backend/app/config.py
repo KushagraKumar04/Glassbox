@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_minutes: int = 1440
     auth_min_password_length: int = 8
+    # When auth is enabled AND guest mode is on, unauthenticated users can
+    # READ (browse pages, list existing data) but not WRITE (upload, run,
+    # connect, delete, pin). Every write returns 403 with a "sign in"
+    # message the frontend turns into a modal.
+    guest_mode: bool = False
 
     # ── Password reset ──────────────────────────────────────
     auth_reset_token_minutes: int = 30
@@ -88,6 +93,14 @@ class Settings(BaseSettings):
     rate_limit_chat: str = "30/minute"
     rate_limit_execute: str = "60/minute"
     rate_limit_storage: str = "memory://"
+
+    # ── News (public landing page) ──────────────────────────
+    news_api_key: str = ""
+    # Optional — auto-detected from the key shape if unset
+    # "currents" | "newsapi" | "guardian"
+    news_provider: str = ""
+    # Optional — override the provider URL
+    news_provider_url: str = ""
 
     # ── Audit ───────────────────────────────────────────────
     audit_retention_days: int = 90
