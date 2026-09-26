@@ -113,7 +113,7 @@ export function TemplatesPage() {
 
         {/* Filter row */}
         <div className="flex items-center gap-2 mb-6 flex-wrap">
-          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "rgba(3,7,18,.5)" }}>
+          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--aida-code-bg)" }}>
             {(
               [
                 ["all", `All (${(data ?? []).length})`],
