@@ -62,9 +62,9 @@ export function TemplateCard({ template, onUse, onEdit, onDelete }: Props) {
       <div
         className="rounded-lg p-2.5 mb-3 text-[12px] font-mono leading-relaxed"
         style={{
-          background: "rgba(3,7,18,.5)",
-          border: "1px solid rgba(148,163,184,.16)",
-          color: "#AAB6CC",
+          background: "var(--aida-code-bg)",
+          border: "1px solid var(--aida-border)",
+          color: "var(--aida-muted)",
         }}
       >
         <div className="line-clamp-3">{template.question}</div>
