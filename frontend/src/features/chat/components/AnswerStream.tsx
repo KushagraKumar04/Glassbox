@@ -1,7 +1,20 @@
-import { Code2, ShieldAlert, Sparkles, Sigma } from "lucide-react";
-
+import {
+  Brain,
+  Code2,
+  HelpCircle,
+  ShieldAlert,
+  Sparkles,
+  Sigma,
+  WandSparkles,
+} from "lucide-react";
+import { NextQuestions } from "@/features/suggestions/components/NextQuestions";
+import { AnomalyCard } from "@/features/charts/components/AnomalyCard";
 import { ChartRenderer } from "@/features/charts/components/ChartRenderer";
 import { KPICards } from "@/features/charts/components/KPICards";
+import { useEffect, useState } from "react";
+import { canFormat, formatSql } from "@/features/execute/format";
+import { SqlExplanation } from "@/features/explain/components/SqlExplanation";
+import { SqlRationale } from "@/features/explain/components/SqlRationale";
 import { useInspector } from "@/features/inspector/store";
 
 import { findArtifact } from "../types";
@@ -12,6 +25,7 @@ import type {
   DaxArtifact,
   ErrorArtifact,
   KPIArtifact,
+  NextQuestionsArtifact,
   PythonArtifact,
   QualityArtifact,
   SqlArtifact,
@@ -22,9 +36,20 @@ interface Props {
   artifacts: Artifact[];
   /** Live narrative text — shown above the artifacts while the run streams. */
   streamingAnswer?: string;
+  /** The original business question. Used for rationale generation. */
+  question?: string;
+  /** Called when the user clicks a suggested follow-up question. */
+  onAsk?: (q: string) => void;
 }
 
-export function AnswerStream({ artifacts, streamingAnswer = "" }: Props) {
+export function AnswerStream({
+  artifacts,
+  streamingAnswer = "",
+  question,
+  onAsk,
+}: Props) {
+  const datasetIds = useInspector((s) => s.datasetIds);
+  const sourceIds = useInspector((s) => s.sourceIds);
   const answer = findArtifact(artifacts, "answer") as AnswerArtifact | undefined;
   const kpi = findArtifact(artifacts, "kpi") as KPIArtifact | undefined;
   const chart = findArtifact(artifacts, "chart") as ChartArtifact | undefined;
@@ -33,6 +58,12 @@ export function AnswerStream({ artifacts, streamingAnswer = "" }: Props) {
   const dax = findArtifact(artifacts, "dax") as DaxArtifact | undefined;
   const quality = findArtifact(artifacts, "quality") as
     | QualityArtifact
+    | undefined;
+  const nextQs = findArtifact(artifacts, "next_questions") as
+    | NextQuestionsArtifact
+    | undefined;
+  const anomaliesArtifact = findArtifact(artifacts, "anomalies") as
+    | import("../types").AnomaliesArtifact
     | undefined;
   const errors = artifacts.filter(
     (a) => a.kind === "error",
@@ -57,14 +88,33 @@ export function AnswerStream({ artifacts, streamingAnswer = "" }: Props) {
         <ChartRenderer
           spec={chart.spec}
           filenameHint={answer?.content.summary}
+          sql={sql?.content}
+          datasetIds={datasetIds}
+          sourceIds={sourceIds}
         />
       )}
-      {sql?.content && <SqlCard artifact={sql} />}
+      {sql?.content && <SqlCard artifact={sql} question={question} />}
       {py?.content && <PythonCard artifact={py} />}
       {dax?.content && <DaxCard artifact={dax} />}
       {errors.map((e, i) => (
         <ErrorCard key={i} artifact={e} />
       ))}
+
+      {anomaliesArtifact &&
+        anomaliesArtifact.anomalies.length > 0 && (
+          <AnomalyCard
+            anomalies={anomaliesArtifact.anomalies}
+            narrative={anomaliesArtifact.narrative}
+          />
+        )}
+
+
+      {nextQs && onAsk && (
+        <NextQuestions
+          questions={nextQs.questions}
+          onAsk={onAsk}
+        />
+      )}
     </div>
   );
 }
@@ -151,9 +201,32 @@ function AnswerCard({
 
 /* ── SQL ────────────────────────────────────────────────── */
 
-function SqlCard({ artifact }: { artifact: SqlArtifact }) {
+function SqlCard({
+  artifact,
+  question,
+}: {
+  artifact: SqlArtifact;
+  question?: string;
+}) {
   const setTab = useInspector((s) => s.setTab);
   const setOpen = useInspector((s) => s.setOpen);
+  const datasetIds = useInspector((s) => s.datasetIds);
+  const sourceIds = useInspector((s) => s.sourceIds);
+  const [explainOpen, setExplainOpen] = useState(false);
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [displaySql, setDisplaySql] = useState(artifact.content);
+
+  // Keep the display in sync when a new artifact lands
+  useEffect(() => {
+    setDisplaySql(artifact.content);
+  }, [artifact.content]);
+
+  const formatQuery = () => {
+    const formatted = formatSql(displaySql);
+    if (formatted !== displaySql) {
+      setDisplaySql(formatted);
+    }
+  };
 
   return (
     <div className="glass rounded-2xl p-5">
@@ -174,11 +247,49 @@ function SqlCard({ artifact }: { artifact: SqlArtifact }) {
         </span>
         <button
           type="button"
+          onClick={() => setExplainOpen((v) => !v)}
+          className="chip cursor-pointer hover:brightness-125 focusable ml-auto"
+          style={
+            explainOpen
+              ? { borderColor: "rgba(139,92,246,.4)", color: "#8B5CF6" }
+              : undefined
+          }
+          title="Explain this query in plain English"
+        >
+          <HelpCircle size={10} strokeWidth={2} />
+          {explainOpen ? "hide explanation" : "explain"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setWhyOpen((v) => !v)}
+          className="chip cursor-pointer hover:brightness-125 focusable"
+          style={
+            whyOpen
+              ? { borderColor: "rgba(251,191,36,.4)", color: "#FBBF24" }
+              : undefined
+          }
+          title="Why the agent chose this approach"
+        >
+          <Brain size={10} strokeWidth={2} />
+          {whyOpen ? "hide rationale" : "why"}
+        </button>
+        <button
+          type="button"
+          onClick={formatQuery}
+          disabled={!canFormat(displaySql)}
+          className="chip cursor-pointer hover:brightness-125 focusable disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Format this query"
+        >
+          <WandSparkles size={10} strokeWidth={2} />
+          format
+        </button>
+        <button
+          type="button"
           onClick={() => {
             setTab("sql");
             setOpen(true);
           }}
-          className="chip cursor-pointer hover:brightness-125 focusable ml-auto"
+          className="chip cursor-pointer hover:brightness-125 focusable"
           title="Open in inspector"
         >
           <Code2 size={10} strokeWidth={2} />
@@ -194,10 +305,21 @@ function SqlCard({ artifact }: { artifact: SqlArtifact }) {
 
       <pre
         className="font-mono text-[12px] leading-[1.65] overflow-x-auto p-3.5 rounded-lg whitespace-pre"
-        style={{ background: "rgba(3,7,18,.6)" }}
+        style={{ background: "var(--aida-code-bg)" }}
       >
-        {artifact.content}
+        {displaySql}
       </pre>
+
+      <div className="mt-3 space-y-3">
+        <SqlExplanation sql={displaySql} open={explainOpen} />
+        <SqlRationale
+          sql={displaySql}
+          question={question}
+          datasetIds={datasetIds}
+          sourceIds={sourceIds}
+          open={whyOpen}
+        />
+      </div>
     </div>
   );
 }
@@ -234,7 +356,7 @@ function PythonCard({ artifact }: { artifact: PythonArtifact }) {
 
       <pre
         className="font-mono text-[12px] leading-[1.65] overflow-x-auto p-3.5 rounded-lg whitespace-pre"
-        style={{ background: "rgba(3,7,18,.6)" }}
+        style={{ background: "var(--aida-code-bg)" }}
       >
         {artifact.content}
       </pre>
@@ -284,7 +406,7 @@ function DaxCard({ artifact }: { artifact: DaxArtifact }) {
 
       <pre
         className="font-mono text-[12px] leading-[1.65] overflow-x-auto p-3.5 rounded-lg whitespace-pre"
-        style={{ background: "rgba(3,7,18,.6)" }}
+        style={{ background: "var(--aida-code-bg)" }}
       >
         {artifact.content}
       </pre>
