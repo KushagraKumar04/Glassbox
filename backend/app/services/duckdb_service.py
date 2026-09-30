@@ -171,6 +171,12 @@ class DuckDBService:
                 f"Use one of: {list(_FILE_READERS)}"
             )
 
+        # Strip BOM before DuckDB reads the file. Idempotent — a clean
+        # file is untouched. This is the definitive fix: it protects every
+        # code path that reaches the reader, not just the upload endpoint.
+        if file_type == "csv":
+            _strip_bom_in_place(path)
+
         reader = _FILE_READERS[file_type]
         safe = self._quote_ident(table_name)
         raw_name = f"{table_name}__aida_raw"
@@ -278,6 +284,103 @@ class DuckDBService:
             "sample": _df_to_records(sample_df),
         }
 
+    # ── Timeout wrapper ─────────────────────────────────────
+
+    def run_with_timeout(
+        self,
+        fn: Any,
+        *,
+        timeout_seconds: int | None = None,
+        op_label: str = "query",
+    ) -> Any:
+        """
+        Run `fn()` in a worker thread with a hard timeout.
+
+        On timeout, calls DuckDB's `interrupt()` on this connection — the
+        worker unwinds with an exception, we propagate `TimeoutError`.
+
+        Why a thread: DuckDB has no per-query timeout knob. `interrupt()`
+        is the documented way to cancel a running statement from another
+        thread, and the connection is reusable afterward.
+
+        Caveats:
+          - The worker is a daemon thread. If `interrupt()` fails to
+            unwind it (rare), the thread leaks until process exit.
+          - One query at a time per connection. Callers must not run a
+            second query on `self.con` while this is running.
+        """
+        timeout = (
+            int(timeout_seconds)
+            if timeout_seconds is not None
+            else int(settings.query_timeout_seconds)
+        )
+        result: list[Any] = []
+        exc: list[BaseException] = []
+
+        def _run() -> None:
+            try:
+                result.append(fn())
+            except BaseException as e:  # noqa: BLE001 — propagate all
+                exc.append(e)
+
+        t = threading.Thread(
+            target=_run, name=f"duckdb-{op_label}", daemon=True
+        )
+        t.start()
+        t.join(timeout)
+
+        if t.is_alive():
+            try:
+                self.con.interrupt()
+            except Exception:
+                pass
+            # Give the worker a moment to unwind after interrupt.
+            t.join(2.0)
+            raise TimeoutError(
+                f"{op_label} exceeded {timeout}s and was interrupted."
+            )
+
+        if exc:
+            raise exc[0]
+
+        return result[0]
+
+    def execute_with_timeout(
+        self,
+        sql: str,
+        params: list[Any] | None = None,
+        *,
+        fetch: str = "all",
+        timeout_seconds: int | None = None,
+    ) -> Any:
+        """
+        Run `con.execute(sql, params)` with a timeout.
+
+        `fetch` selects what to return: "all" | "one" | "df" | "none".
+        Used by callers that hit the connection directly (column stats,
+        drill-down) so they get the same timeout as `query()`.
+        """
+
+        def _do() -> Any:
+            cur = (
+                self.con.execute(sql, params)
+                if params
+                else self.con.execute(sql)
+            )
+            if fetch == "one":
+                return cur.fetchone()
+            if fetch == "all":
+                return cur.fetchall()
+            if fetch == "df":
+                return cur.fetchdf()
+            if fetch == "none":
+                return None
+            raise ValueError(f"Unknown fetch mode: {fetch!r}")
+
+        return self.run_with_timeout(
+            _do, timeout_seconds=timeout_seconds, op_label="execute"
+        )
+
     # ── Query ───────────────────────────────────────────────
 
     def query(
@@ -287,7 +390,8 @@ class DuckDBService:
     ) -> pd.DataFrame:
         """
         Execute a read-only SELECT/WITH. Wraps in a subquery with LIMIT so
-        a runaway query can't return unbounded rows.
+        a runaway query can't return unbounded rows, and runs under
+        `run_with_timeout` so a pathological query can't hang forever.
         """
         limit = limit or settings.max_query_rows
 
@@ -312,7 +416,11 @@ class DuckDBService:
                 raise PermissionError(f"Forbidden statement: {bad}")
 
         wrapped = f"SELECT * FROM ({stripped}) AS _q LIMIT {int(limit)}"
-        return self.con.execute(wrapped).fetchdf()
+
+        def _do() -> pd.DataFrame:
+            return self.con.execute(wrapped).fetchdf()
+
+        return self.run_with_timeout(_do, op_label="query")
 
     def explain(self, sql: str) -> str:
         """Return the EXPLAIN plan. Raises if the SQL is invalid."""
@@ -382,34 +490,55 @@ class DuckDBService:
 #  Helpers
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _ensure_no_bom(path: str) -> str:
+def _strip_bom_in_place(path: str) -> None:
     """
-    DuckDB's CSV sniffer fails on UTF-8 BOM (PowerShell, Excel exports).
-    If a BOM is present, write a sibling file without it and return that path.
-    Cached: if the no-BOM version already exists, we don't rewrite.
+    Rewrite a text file without its BOM, in place. Idempotent.
+
+    DuckDB's CSV sniffer rejects any BOM:
+      - UTF-8  (EF BB BF)  → strip, keep the rest as-is
+      - UTF-16 LE (FF FE)  → strip, decode, re-encode as UTF-8
+      - UTF-16 BE (FE FF)  → strip, decode, re-encode as UTF-8
+
+    Called by `register_file` for CSV/TSV/TXT so every reader path is
+    protected — uploads, direct profile calls, legacy files that were
+    written before the upload-side strip existed.
+
+    Fail-open: on any I/O or decode error, leaves the file untouched so
+    DuckDB can produce its own error rather than us masking it.
     """
     p = Path(path)
-    if not p.exists() or p.suffix.lower() not in {".csv", ".tsv", ".txt"}:
-        return path
+    if not p.exists() or not p.is_file():
+        return
+    if p.suffix.lower() not in {".csv", ".tsv", ".txt"}:
+        return
 
     try:
-        with open(p, "rb") as f:
-            head = f.read(3)
-        if head != b"\xef\xbb\xbf":
-            return path  # already clean
+        data = p.read_bytes()
+    except OSError:
+        return
 
-        clean = p.with_name(f"{p.stem}_nobom{p.suffix}")
-        # Only rewrite if missing or older than the source
-        if (
-            not clean.exists()
-            or clean.stat().st_mtime < p.stat().st_mtime
-        ):
-            with open(p, "rb") as src, open(clean, "wb") as dst:
-                src.read(3)           # skip BOM
-                dst.write(src.read())
-        return str(clean)
-    except Exception:
-        return path  # fail open — DuckDB will surface a clearer error
+    stripped: bytes | None = None
+
+    if data.startswith(b"\xef\xbb\xbf"):
+        stripped = data[3:]
+    elif data.startswith(b"\xff\xfe"):
+        try:
+            stripped = data[2:].decode("utf-16-le").encode("utf-8")
+        except UnicodeDecodeError:
+            return
+    elif data.startswith(b"\xfe\xff"):
+        try:
+            stripped = data[2:].decode("utf-16-be").encode("utf-8")
+        except UnicodeDecodeError:
+            return
+
+    if stripped is None:
+        return
+
+    try:
+        p.write_bytes(stripped)
+    except OSError:
+        return
 
 def _df_to_records(df: pd.DataFrame) -> list[dict[str, Any]]:
     """
