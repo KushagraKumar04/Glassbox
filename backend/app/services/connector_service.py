@@ -25,6 +25,8 @@ from typing import Any
 
 import structlog
 
+from app.core.errors import classify_db_error, sanitize_message
+from app.core.ssrf_guard import SsrfError, assert_safe_host
 from app.db.models import DataSource
 from app.services.duckdb_service import DuckDBService
 
@@ -77,6 +79,18 @@ class ConnectorService:
         kind = source.kind.lower().strip()
 
         if kind == "postgres":
+            # SSRF guard: reject loopback/private/metadata hosts unless
+            # the operator has explicitly allowed them via
+            # CONNECTOR_ALLOW_PRIVATE_HOSTS or CONNECTOR_ALLOWLIST.
+            try:
+                assert_safe_host(
+                    source.host,
+                    source.port or _DEFAULT_PORTS["postgres"],
+                )
+            except SsrfError as e:
+                # The guard's message is already user-safe and specific.
+                raise RuntimeError(str(e)) from e
+
             conn = self._pg_conn(source, password)
             self._ensure_extension("postgres")
             sql = (
@@ -84,6 +98,14 @@ class ConnectorService:
                 f"(TYPE POSTGRES, READ_ONLY)"
             )
         elif kind == "mysql":
+            try:
+                assert_safe_host(
+                    source.host,
+                    source.port or _DEFAULT_PORTS["mysql"],
+                )
+            except SsrfError as e:
+                raise RuntimeError(str(e)) from e
+
             conn = self._mysql_conn(source, password)
             self._ensure_extension("mysql")
             sql = (
@@ -93,7 +115,22 @@ class ConnectorService:
         elif kind == "sqlite":
             if not source.database:
                 raise RuntimeError("SQLite source is missing a database file path.")
-            path = source.database.replace("'", "''")
+
+            # SQLite is local — no SSRF surface — but lock down the path:
+            # must exist, be a regular file, and have a known extension.
+            from pathlib import Path as _P
+            p = _P(source.database).expanduser()
+            if not p.exists():
+                raise RuntimeError(f"SQLite file not found: {source.database}")
+            if not p.is_file():
+                raise RuntimeError(
+                    f"SQLite path is not a regular file: {source.database}"
+                )
+            if p.suffix.lower() not in {".db", ".sqlite", ".sqlite3"}:
+                raise RuntimeError(
+                    "SQLite database must end with .db, .sqlite, or .sqlite3"
+                )
+            path = str(p).replace("'", "''")
             sql = f"ATTACH '{path}' AS {alias} (TYPE SQLITE, READ_ONLY)"
         else:
             raise RuntimeError(f"Unsupported source kind: {kind}")
@@ -101,11 +138,20 @@ class ConnectorService:
         try:
             self.db.con.execute(sql)
         except Exception as e:
-            # Scrub the connection string from the error — it contains the password
-            msg = str(e)
+            # Scrub the connection string (contains the password), redact
+            # filesystem paths, then classify.
+            raw = str(e)
             if password:
-                msg = msg.replace(password, "***")
-            raise RuntimeError(msg[:600]) from e
+                raw = raw.replace(password, "***")
+            category = classify_db_error(raw)
+            safe = sanitize_message(raw, max_len=500)
+            log.info(
+                "attach_failed",
+                kind=kind,
+                host=source.host,
+                category=category,
+            )
+            raise RuntimeError(safe) from e
 
         tables = self._discover_tables(alias)
         return AttachedSource(alias=alias, kind=kind, tables=tables)
@@ -181,11 +227,14 @@ class ConnectorService:
 
     @staticmethod
     def _pg_conn(source: DataSource, password: str) -> str:
+        from app.config import get_settings
+        timeout = get_settings().connector_connect_timeout_seconds
         parts = [
             f"host={source.host}",
             f"port={source.port or _DEFAULT_PORTS['postgres']}",
             f"dbname={source.database}",
             f"user={source.username}",
+            f"connect_timeout={timeout}",
         ]
         if password:
             parts.append(f"password={password}")
@@ -196,11 +245,14 @@ class ConnectorService:
 
     @staticmethod
     def _mysql_conn(source: DataSource, password: str) -> str:
+        from app.config import get_settings
+        timeout = get_settings().connector_connect_timeout_seconds
         parts = [
             f"host={source.host}",
             f"port={source.port or _DEFAULT_PORTS['mysql']}",
             f"database={source.database}",
             f"user={source.username}",
+            f"connect_timeout={timeout}",
         ]
         if password:
             parts.append(f"password={password}")
