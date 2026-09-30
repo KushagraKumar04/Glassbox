@@ -496,3 +496,57 @@ class DashboardResponse(BaseModel):
 
 class PinRequest(BaseModel):
     pinned: bool
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Column drill-down
+# ═══════════════════════════════════════════════════════════════════════════
+
+class HistogramBucket(BaseModel):
+    """A single bucket in a numeric or temporal histogram."""
+    label: str
+    value: float
+    lower: float | None = None
+    upper: float | None = None
+
+
+class TopValue(BaseModel):
+    value: str
+    count: int
+    pct: float
+
+
+class ColumnStatsResponse(BaseModel):
+    """Everything the drill-down modal needs to render."""
+    dataset_id: str
+    table: str
+    column: str
+    kind: Literal["numeric", "date", "boolean", "text"]
+    dtype: str
+
+    # Always present
+    row_count: int
+    null_count: int
+    null_rate: float
+    distinct_count: int
+
+    # Numeric-only
+    minimum: float | None = None
+    maximum: float | None = None
+    mean: float | None = None
+    median: float | None = None
+    p25: float | None = None
+    p75: float | None = None
+    std: float | None = None
+
+    # Distribution — histogram buckets (numeric/date) or value counts (text/bool)
+    histogram: list[HistogramBucket] = Field(default_factory=list)
+    top_values: list[TopValue] = Field(default_factory=list)
+
+    # Sample values (up to 10)
+    sample: list[Any] = Field(default_factory=list)
+
+    # Optional min/max for date columns
+    date_min: str | None = None
+    date_max: str | None = None
+
+    elapsed_ms: int = 0
