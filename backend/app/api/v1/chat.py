@@ -11,6 +11,7 @@ from app.core.rate_limit import limiter
 from sqlalchemy import select
 from sse_starlette.sse import EventSourceResponse
 
+from app.core.errors import sanitize_message
 from app.db.models import User
 from app.db.session import get_session
 from app.dependencies.auth import get_current_user
@@ -52,13 +53,19 @@ async def chat_stream(
         )
     except Exception as e:
         log.exception("dataset_load_failed")
-        raise HTTPException(500, f"Failed to load datasets: {e}")
+        raise HTTPException(
+            500,
+            f"Failed to load datasets: {sanitize_message(str(e), max_len=200)}",
+        )
 
     try:
         orch = Orchestrator(db)
     except Exception as e:
         log.exception("orchestrator_init_failed")
-        raise HTTPException(500, f"LLM init failed: {e}")
+        raise HTTPException(
+            500,
+            f"LLM init failed: {sanitize_message(str(e), max_len=200)}",
+        )
 
     async def event_generator():
         yield {"event": "run_started", "data": json.dumps({"run_id": run_id})}
@@ -82,7 +89,9 @@ async def chat_stream(
             log.exception("run_failed", run_id=run_id)
             yield {
                 "event": "error",
-                "data": json.dumps({"message": str(e)[:300]}),
+                "data": json.dumps({
+                    "message": sanitize_message(str(e), max_len=300),
+                }),
             }
         finally:
             try:
