@@ -17,6 +17,7 @@ import structlog
 from fastapi import APIRouter, Depends, Request
 
 from app.config import get_settings
+from app.core.errors import sanitize_message
 from app.core.rate_limit import limiter
 from app.db.models import User
 from app.dependencies.auth import get_current_user
@@ -64,7 +65,28 @@ async def drilldown(
             elapsed_ms=int((time.time() - t0) * 1000),
         )
 
-    ident = _quote_ident(req.column)
+    # Column-name sanity check. `_quote_ident` already prevents SQL
+    # injection, but a length cap and control-character check keep the
+    # generated query bounded and avoid pathological inputs.
+    col = (req.column or "").strip()
+    if not col or len(col) > 255:
+        return DrilldownResponse(
+            ok=False,
+            error="Invalid column name.",
+            column=req.column,
+            value=req.value,
+            elapsed_ms=int((time.time() - t0) * 1000),
+        )
+    if any(ord(c) < 32 for c in col):
+        return DrilldownResponse(
+            ok=False,
+            error="Column name contains control characters.",
+            column=req.column,
+            value=req.value,
+            elapsed_ms=int((time.time() - t0) * 1000),
+        )
+
+    ident = _quote_ident(col)
     literal = _sql_literal(req.value)
     filtered_sql = (
         f"SELECT * FROM ({inner}) AS _drill "
@@ -80,7 +102,7 @@ async def drilldown(
         log.warning("drilldown_load_failed", error=str(e)[:200])
         return DrilldownResponse(
             ok=False,
-            error=f"Failed to load datasets: {str(e)[:200]}",
+            error=f"Failed to load datasets: {sanitize_message(str(e), max_len=200)}",
             column=req.column,
             value=req.value,
             elapsed_ms=int((time.time() - t0) * 1000),
@@ -92,7 +114,7 @@ async def drilldown(
         db.close()
         return DrilldownResponse(
             ok=False,
-            error=f"Read-only policy: {str(e)[:200]}",
+            error=f"Read-only policy: {sanitize_message(str(e), max_len=200)}",
             column=req.column,
             value=req.value,
             elapsed_ms=int((time.time() - t0) * 1000),
@@ -102,7 +124,7 @@ async def drilldown(
         log.info("drilldown_query_failed", error=str(e)[:200])
         return DrilldownResponse(
             ok=False,
-            error=str(e)[:400],
+            error=sanitize_message(str(e), max_len=300),
             column=req.column,
             value=req.value,
             elapsed_ms=int((time.time() - t0) * 1000),
