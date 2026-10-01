@@ -9,6 +9,8 @@ router = APIRouter(tags=["health"])
 
 @router.get("/health")
 async def health() -> dict:
+    from app.core.auth_backoff import stats as backoff_stats
+
     s = get_settings()
     return {
         "status": "ok",
@@ -16,4 +18,5 @@ async def health() -> dict:
         "provider": s.llm_provider,
         "model": s.llm_model,
         "version": __version__,
+        "auth_backoff": backoff_stats(),
     }

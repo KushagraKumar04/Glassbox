@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import decrypt, encrypt
+from app.core.errors import classify_db_error, sanitize_message
 from app.db.models import DataSource, User
 from app.db.session import get_session
 from app.dependencies.auth import get_current_user
@@ -89,7 +90,17 @@ async def create_source(
         conn = ConnectorService(db)
         result = conn.test_connection(source, req.password)
         source.status = "healthy" if result["ok"] else "error"
-        source.last_error = result.get("error", "")[:500]
+        raw_err = result.get("error", "") or ""
+        # Store a classified + sanitized version so operators see
+        # "auth_failed: password authentication failed" instead of a
+        # libpq dump containing host:port.
+        if raw_err:
+            cat = classify_db_error(raw_err)
+            source.last_error = (
+                f"{cat}: {sanitize_message(raw_err, max_len=400)}"
+            )[:500]
+        else:
+            source.last_error = ""
         source.tables = result.get("tables", [])
         source.last_tested_at = datetime.utcnow()
     finally:
@@ -106,7 +117,10 @@ async def create_source(
                 409,
                 f"You already have a source named '{req.name}'.",
             )
-        raise HTTPException(500, f"Failed to save source: {msg[:200]}")
+        raise HTTPException(
+            500,
+            f"Failed to save source: {sanitize_message(msg, max_len=200)}",
+        )
     await session.refresh(source)
 
     await audit(
@@ -170,7 +184,14 @@ async def refresh_source(
         conn = ConnectorService(db)
         result = conn.test_connection(source, password)
         source.status = "healthy" if result["ok"] else "error"
-        source.last_error = result.get("error", "")[:500]
+        raw_err = result.get("error", "") or ""
+        if raw_err:
+            cat = classify_db_error(raw_err)
+            source.last_error = (
+                f"{cat}: {sanitize_message(raw_err, max_len=400)}"
+            )[:500]
+        else:
+            source.last_error = ""
         source.tables = result.get("tables", [])
         source.last_tested_at = datetime.utcnow()
     finally:
@@ -218,7 +239,10 @@ async def list_tables(
             out.append({**t, "columns": cols})
         return {"source_id": source.id, "tables": out}
     except Exception as e:
-        raise HTTPException(400, str(e)[:400])
+        raise HTTPException(
+            400,
+            sanitize_message(str(e), max_len=300),
+        )
     finally:
         db.close()
 
