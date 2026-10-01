@@ -27,6 +27,10 @@ data/
 *.sqlite
 *.sqlite3
 
+# ─── Audit reports ────────────────────────────────────────
+audit-backend.json
+audit-frontend.json
+
 # ─── OS ───────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
