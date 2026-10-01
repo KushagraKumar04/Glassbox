@@ -21,6 +21,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.core.audit import audit
+from app.core.auth_backoff import (
+    AuthBackoffError,
+    check_account,
+    record_failure,
+    record_success,
+)
 from app.core.security import (
     create_access_token,
     generate_reset_token,
@@ -59,6 +65,23 @@ def _normalize_email(email: str) -> str:
 
 def _normalize_username(username: str) -> str:
     return username.strip()
+
+
+def _backoff_response(exc: AuthBackoffError) -> HTTPException:
+    """
+    Convert an AuthBackoffError into a 429 with a Retry-After header so
+    clients know exactly how long to wait. Message is intentionally
+    generic — it never confirms whether the account exists.
+    """
+    retry = exc.retry_after_seconds
+    return HTTPException(
+        status_code=429,
+        detail=(
+            f"Too many failed attempts. Try again in {retry} second"
+            f"{'s' if retry != 1 else ''}."
+        ),
+        headers={"Retry-After": str(retry)},
+    )
 
 
 def _reset_url(raw_token: str) -> str:
@@ -164,42 +187,64 @@ async def login(
         )
 
     ident = req.username.strip()
+    # Normalize to a single backoff key regardless of whether the client
+    # supplied an email or a username. Same account → same key.
+    account_key = _normalize_email(ident)
+
+    # Per-account exponential backoff. Checked before any DB work so a
+    # throttled account doesn't consume resources.
+    try:
+        await check_account(account_key)
+    except AuthBackoffError as e:
+        log.warning(
+            "auth_login_backoff",
+            username=ident,
+            retry_after=e.retry_after_seconds,
+        )
+        raise _backoff_response(e)
+
     result = await session.execute(
         select(User).where(
             or_(
                 User.username == ident,
-                User.email == _normalize_email(ident),
+                User.email == account_key,
             )
         )
     )
     user = result.scalar_one_or_none()
 
     if not user or not user.is_active:
+        delay = await record_failure(account_key)
         await audit(
             "auth.login_failed",
             request=request,
             username=ident,
-            details={"reason": "unknown_or_inactive"},
+            details={"reason": "unknown_or_inactive", "backoff_delay": delay},
         )
         raise HTTPException(401, "Invalid credentials.")
 
     if not user.hashed_password:
+        delay = await record_failure(account_key)
         await audit(
             "auth.login_failed",
             request=request,
             username=ident,
-            details={"reason": "unknown_or_inactive"},
+            details={"reason": "no_password", "backoff_delay": delay},
         )
         raise HTTPException(401, "Invalid credentials.")
 
     if not verify_password(req.password, user.hashed_password):
+        delay = await record_failure(account_key)
         await audit(
             "auth.login_failed",
             request=request,
             username=ident,
-            details={"reason": "unknown_or_inactive"},
+            details={"reason": "bad_password", "backoff_delay": delay},
         )
         raise HTTPException(401, "Invalid credentials.")
+
+    # Success → clear the backoff counter for this account.
+    await record_success(account_key)
 
     log.info("user_login", user_id=user.id, username=user.username)
     await audit(
