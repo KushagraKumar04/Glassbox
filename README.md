@@ -1300,3 +1300,11 @@ It keeps the motivation high, helps others discover the project, and gives the b
 <b>Check back soon. The glass is about to become crystal clear. 🔮</b>
 
 </div>
+
+<a href="https://www.star-history.com/?repos=kushagrakumar04%2Fglassbox&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=kushagrakumar04/glassbox&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=kushagrakumar04/glassbox&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=kushagrakumar04/glassbox&type=date&legend=top-left" />
+ </picture>
+</a>
