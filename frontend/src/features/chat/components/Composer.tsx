@@ -8,7 +8,8 @@ import {
 
 import { HistoryAutocomplete } from "@/features/suggestions/components/HistoryAutocomplete";
 import { useQuestionHistory } from "@/features/suggestions/useQuestionHistory";
-
+import { useGuestGate } from "@/features/auth/guest-gate";
+import { useAuth } from "@/features/auth/store";
 import type { RunState } from "../types";
 
 interface Props {
@@ -19,6 +20,13 @@ interface Props {
 }
 
 export function Composer({ onRun, onCancel, state, sourceSlot }: Props) {
+  const authEnabled = useAuth((s) => s.enabled);
+  const authConfig = useAuth((s) => s.config);
+  const authUser = useAuth((s) => s.user);
+  const isGuest =
+    authEnabled && (authConfig?.guest_mode ?? false) && !authUser;
+  const showGuestGate = useGuestGate((s) => s.show);
+
   const [value, setValue] = useState("");
   const [autocompleteVisible, setAutocompleteVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -51,6 +59,10 @@ export function Composer({ onRun, onCancel, state, sourceSlot }: Props) {
   const submit = () => {
     const q = value.trim();
     if (!q || running) return;
+    if (isGuest) {
+      showGuestGate("Sign in to run analyses in the workspace.");
+      return;
+    }
     onRun(q);
     setValue("");
     setAutocompleteVisible(false);
@@ -132,8 +144,8 @@ export function Composer({ onRun, onCancel, state, sourceSlot }: Props) {
     <div
       className="flex-none px-5 py-4 border-t"
       style={{
-        borderColor: "rgba(148,163,184,.16)",
-        background: "rgba(11,16,32,.72)",
+        borderColor: "var(--aida-border)",
+        background: "var(--aida-surface-strong)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
       }}
@@ -217,7 +229,7 @@ export function Composer({ onRun, onCancel, state, sourceSlot }: Props) {
                 }}
               >
                 <Play size={12} fill="currentColor" />
-                Run
+                {isGuest ? "Sign in to run" : "Run"}
               </button>
             )}
           </div>
