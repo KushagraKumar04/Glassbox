@@ -1301,8 +1301,6 @@ It keeps the motivation high, helps others discover the project, and gives the b
 
 </div>
 
-## Star History
-
 <a href="https://www.star-history.com/?repos=kushagrakumar04%2Fglassbox&type=date&legend=top-left">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=kushagrakumar04/glassbox&type=date&theme=dark&legend=top-left" />
