@@ -18,6 +18,7 @@ import time
 import pandas as pd
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
+from app.core.errors import sanitize_message
 from app.core.rate_limit import limiter
 
 from app.config import get_settings
@@ -77,7 +78,8 @@ async def execute_sql(
         log.warning("execute_sql_load_failed", error=str(e)[:200])
         return ExecuteSqlResponse(
             ok=False,
-            error=f"Failed to load datasets: {str(e)[:300]}",
+            error=f"Failed to load datasets: "
+                  f"{sanitize_message(str(e), max_len=300)}",
             elapsed_ms=int((time.time() - t0) * 1000),
         )
 
@@ -87,7 +89,17 @@ async def execute_sql(
         db.close()
         return ExecuteSqlResponse(
             ok=False,
-            error=f"Read-only policy: {str(e)[:300]}",
+            error=f"Read-only policy: "
+                  f"{sanitize_message(str(e), max_len=300)}",
+            elapsed_ms=int((time.time() - t0) * 1000),
+        )
+    except TimeoutError as e:
+        db.close()
+        log.info("execute_sql_timeout", error=str(e)[:200])
+        return ExecuteSqlResponse(
+            ok=False,
+            error=f"Query exceeded {settings.query_timeout_seconds}s "
+                  f"and was interrupted.",
             elapsed_ms=int((time.time() - t0) * 1000),
         )
     except Exception as e:
@@ -95,7 +107,7 @@ async def execute_sql(
         log.info("execute_sql_failed", error=str(e)[:200])
         return ExecuteSqlResponse(
             ok=False,
-            error=str(e)[:500],
+            error=sanitize_message(str(e), max_len=500),
             elapsed_ms=int((time.time() - t0) * 1000),
         )
     finally:
@@ -178,7 +190,7 @@ async def execute_python(
         return ExecutePythonResponse(
             ok=False,
             status="error",
-            stdout=str(e)[:500],
+            stdout=sanitize_message(str(e), max_len=500),
             elapsed_ms=int((time.time() - t0) * 1000),
         )
 
