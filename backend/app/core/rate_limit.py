@@ -23,9 +23,10 @@ import hashlib
 import structlog
 from fastapi import Request
 from fastapi.responses import JSONResponse
+import ipaddress
+
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from app.config import get_settings
 
@@ -33,12 +34,74 @@ settings = get_settings()
 log = structlog.get_logger()
 
 
+def _ip_in_list(ip_str: str, entries: list[str]) -> bool:
+    """Return True if `ip_str` matches any IP or CIDR in `entries`."""
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False
+    for entry in entries:
+        try:
+            if "/" in entry:
+                if ip in ipaddress.ip_network(entry, strict=False):
+                    return True
+            else:
+                if ip == ipaddress.ip_address(entry):
+                    return True
+        except ValueError:
+            continue
+    return False
+
+
+def get_client_ip(request: Request) -> str:
+    """
+    Derive the real client IP, honoring X-Forwarded-For ONLY when a
+    trusted proxy is configured.
+
+    trusted_proxy_count == 0  → always use the direct peer IP.
+    trusted_proxy_count == N  → take the Nth-from-right entry of XFF,
+                                after verifying the immediate peer is
+                                a trusted proxy (when TRUSTED_PROXY_IPS
+                                is non-empty).
+
+    Falls back to the direct peer on any parse failure. Never trusts an
+    unverified XFF.
+    """
+    direct = request.client.host if request.client else "unknown"
+
+    if settings.trusted_proxy_count <= 0:
+        return direct
+
+    # If the operator gave us a peer allowlist, verify before trusting XFF.
+    trusted = settings.trusted_proxy_ip_list
+    if trusted and not _ip_in_list(direct, trusted):
+        return direct
+
+    xff = request.headers.get("x-forwarded-for", "")
+    if not xff:
+        return direct
+
+    parts = [p.strip() for p in xff.split(",") if p.strip()]
+    # Nth-from-right: with 1 proxy, the rightmost entry is the original client.
+    idx = len(parts) - settings.trusted_proxy_count
+    if 0 <= idx < len(parts):
+        candidate = parts[idx]
+        # Sanity: must parse as an IP
+        try:
+            ipaddress.ip_address(candidate)
+            return candidate
+        except ValueError:
+            return direct
+
+    return direct
+
+
 def rate_limit_key(request: Request) -> str:
     """
     Return a stable key for rate limiting.
 
     Prefers the JWT bearer token when present (per-user limit).
-    Falls back to the client IP (per-network limit).
+    Falls back to the derived client IP (per-network limit).
     """
     auth = request.headers.get("authorization", "")
     if auth.lower().startswith("bearer "):
@@ -48,7 +111,7 @@ def rate_limit_key(request: Request) -> str:
             digest = hashlib.sha256(token.encode("utf-8")).hexdigest()[:16]
             return f"user:{digest}"
 
-    ip = get_remote_address(request)
+    ip = get_client_ip(request)
     return f"ip:{ip or 'unknown'}"
 
 
