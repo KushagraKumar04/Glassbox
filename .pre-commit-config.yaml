@@ -1,0 +1,38 @@
+# Pre-commit hooks for Glassbox.
+#
+# Install once (from repo root, venv active):
+#   pip install pre-commit
+#   pre-commit install
+#
+# Run manually across the whole repo:
+#   pre-commit run --all-files
+#
+# Uninstall:
+#   pre-commit uninstall && pip uninstall pre-commit
+
+repos:
+  # ── Secret scanning ──────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        name: Detect hardcoded secrets
+        description: >-
+          Scan staged changes for API keys, tokens, passwords, and
+          private keys. Fails the commit if any are found.
+        entry: gitleaks protect --verbose --redact --staged
+        language: golang
+        pass_filenames: false
+
+  # ── Basic hygiene ────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=5120"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: \.(md|txt)$
+      - id: trailing-whitespace
+        exclude: \.(md|txt)$
