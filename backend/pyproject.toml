@@ -1,0 +1,53 @@
+
+---
+
+### 📄 `backend/pyproject.toml`
+Path: `ai-data-analyst/backend/pyproject.toml`
+
+```toml
+[project]
+name = "glassbox-backend"
+version = "0.1.0"
+description = "A glass-box AI analyst. Ask in English. Get the answer, the SQL, and the proof."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "python-dotenv>=1.0",
+    "google-genai>=1.0",
+    "openai>=1.50",
+    "anthropic>=0.40",
+    "duckdb>=1.1",
+    "pandas>=2.2",
+    "pyarrow>=18.0",
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.20",
+    "python-multipart>=0.0.12",
+    "sse-starlette>=2.1",
+    "structlog>=24.4",
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.7",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]
