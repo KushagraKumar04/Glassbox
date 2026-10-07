@@ -54,3 +54,10 @@ export function AppShell() {
           </div>
         </div>
       </div>
+      <CommandPalette />
+      <ShortcutsModal />
+      <GuestSignInPrompt />
+      <OnboardingTour />
+    </>
+  );
+}
