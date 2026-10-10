@@ -34,3 +34,15 @@ export interface DashboardResponse {
   source_count: number;
   filters_count: number;
 }
+
+export interface DashboardRequest {
+  dataset_ids: string[];
+  source_ids: string[];
+  filters: FilterCondition[];
+  max_panels?: number;
+}
+
+export const dashboardApi = {
+  generate: (req: DashboardRequest) =>
+    apiPost<DashboardResponse>("/dashboard/generate", req),
+};
