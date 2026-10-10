@@ -42,3 +42,17 @@ Write-Host ""
 Write-Host "Running audit (JSON + human)..." -ForegroundColor Cyan
 
 # JSON report for CI / logs
+pip-audit --format json --output audit-backend.json
+
+# Human report on the terminal
+pip-audit --desc
+
+# Exit code: pip-audit returns non-zero if any vulnerability is found
+$exit = $LASTEXITCODE
+Write-Host ""
+if ($exit -eq 0) {
+    Write-Host "No known vulnerabilities." -ForegroundColor Green
+} else {
+    Write-Host "Vulnerabilities found — see report above." -ForegroundColor Red
+}
+exit $exit
