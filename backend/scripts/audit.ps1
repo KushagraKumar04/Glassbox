@@ -23,3 +23,22 @@ if (-not (Test-Path "requirements.txt")) {
     Write-Host "Error: run this from backend/ (requirements.txt not found)" -ForegroundColor Red
     exit 2
 }
+
+# Make sure pip-audit is available
+$auditVersion = pip-audit --version 2>$null
+if (-not $auditVersion) {
+    Write-Host "pip-audit not installed. Installing..." -ForegroundColor Yellow
+    pip install pip-audit
+}
+
+if ($Fix) {
+    Write-Host "Attempting safe auto-fixes..." -ForegroundColor Yellow
+    pip-audit --fix --dry-run
+    # Uncomment below to actually apply fixes after reviewing the dry-run
+    # pip-audit --fix
+}
+
+Write-Host ""
+Write-Host "Running audit (JSON + human)..." -ForegroundColor Cyan
+
+# JSON report for CI / logs
