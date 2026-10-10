@@ -26,3 +26,11 @@ export interface DashboardPanelData {
   value: number | null;
   score: number;
 }
+
+export interface DashboardResponse {
+  panels: DashboardPanelData[];
+  elapsed_ms: number;
+  dataset_count: number;
+  source_count: number;
+  filters_count: number;
+}
