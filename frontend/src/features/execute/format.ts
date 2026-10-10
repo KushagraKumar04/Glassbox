@@ -23,3 +23,23 @@ const DEFAULTS: FormatOptionsWithLanguage = {
   expressionWidth: 60,
   linesBetweenQueries: 2,
 };
+
+export function formatSql(sql: string): string {
+  if (!sql || !sql.trim()) return sql;
+  try {
+    return format(sql, DEFAULTS);
+  } catch {
+    // sql-formatter throws on syntax errors — leave the query untouched
+    return sql;
+  }
+}
+
+export function canFormat(sql: string): boolean {
+  if (!sql || !sql.trim()) return false;
+  try {
+    format(sql, DEFAULTS);
+    return true;
+  } catch {
+    return false;
+  }
+}
