@@ -4,7 +4,7 @@
 
 A local-first, provider-agnostic analytics workspace. Upload a file or connect a
 database, ask a question in plain English, and get back SQL, Python, DAX,
-interactive charts, and a transparen trace - never an opaque answer.
+interactive charts, and a transparent trace - never an opaque answer.
 
 ---
 
