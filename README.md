@@ -1193,7 +1193,7 @@ A **Glassbox** implies transparency - a system where you can see exactly how the
 ```text
 Frontend Architecture  [██████████----------]  70% 🎨
 Backend Systems        [██████████████------]  70% ⚙️
-Core Logic Integration [██████--------------]  30% 🧠
+Core Logic Integration [██████--------------]  50% 🧠
 Overall Construction   [████████------------]  45% 🚀
 ```
 
