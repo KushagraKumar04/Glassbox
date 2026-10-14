@@ -4,7 +4,7 @@
 
 A local-first, provider-agnostic analytics workspace. Upload a file or connect a
 database, ask a question in plain English, and get back SQL, Python, DAX,
-interactive charts, and a transparent execution trace - never an opaque answer.
+interactive charts, and a transparent trace - never an opaque answer.
 
 ---
 
@@ -1191,9 +1191,9 @@ A **Glassbox** implies transparency - a system where you can see exactly how the
 ## 📊 Current Progress
 
 ```text
-Frontend Architecture  [██████████----------]  50% 🎨
+Frontend Architecture  [██████████----------]  70% 🎨
 Backend Systems        [██████████████------]  70% ⚙️
-Core Logic Integration [██████--------------]  30% 🧠
+Core Logic Integration [██████--------------]  50% 🧠
 Overall Construction   [████████------------]  45% 🚀
 ```
 
