@@ -58,7 +58,10 @@ export async function streamSSE(
   }
 
   if (!res.ok || !res.body) {
-    onError?.(new Error(`SSE failed: ${res.status} ${res.statusText}`));
+    const statusInfo = res.statusText
+      ? `${res.status} ${res.statusText}`
+      : `${res.status}`;
+    onError?.(new Error(`SSE failed: ${statusInfo}`));
     return;
   }
 
