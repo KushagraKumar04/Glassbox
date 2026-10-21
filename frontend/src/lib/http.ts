@@ -37,8 +37,21 @@ function handleForbidden(res: Response, detail: string): void {
 }
 
 async function parseError(res: Response): Promise<string> {
+  // Read the body ONCE. Response bodies are single-use — calling
+  // res.json() then res.text() in a catch never works: json() consumes
+  // the stream, and text() throws "body already used". Read text first,
+  // then try to parse it as JSON.
+  let text: string;
   try {
-    const body = await res.json();
+    text = await res.text();
+  } catch {
+    return `HTTP ${res.status}`;
+  }
+
+  if (!text) return `HTTP ${res.status}`;
+
+  try {
+    const body = JSON.parse(text);
     if (typeof body?.detail === "string") return body.detail;
     if (Array.isArray(body?.detail)) {
       return body.detail
@@ -47,11 +60,7 @@ async function parseError(res: Response): Promise<string> {
     }
     return JSON.stringify(body);
   } catch {
-    try {
-      return await res.text();
-    } catch {
-      return `HTTP ${res.status}`;
-    }
+    return text;
   }
 }
 async function parseRateLimitError(res: Response): Promise<string> {
