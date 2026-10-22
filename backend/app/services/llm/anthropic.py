@@ -28,14 +28,15 @@ _JSON_HINT = (
 class AnthropicProvider(LLMProvider):
     name = "anthropic"
 
-    def __init__(self) -> None:
-        if not settings.llm_api_key:
+    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
+        key = api_key if api_key is not None else settings.llm_api_key
+        if not key:
             raise LLMError("LLM_API_KEY is required for provider 'anthropic'")
         self.client = AsyncAnthropic(
-            api_key=settings.llm_api_key,
+            api_key=key,
             timeout=settings.query_timeout_seconds,
         )
-        self.model = settings.llm_model
+        self.model = model if model is not None else settings.llm_model
 
     # ── Generate ────────────────────────────────────────────
 
