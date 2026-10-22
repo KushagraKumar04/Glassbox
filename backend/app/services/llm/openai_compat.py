@@ -37,9 +37,18 @@ _DEFAULT_BASES = {
 
 
 class OpenAICompatProvider(LLMProvider):
-    def __init__(self, name: str = "openai") -> None:
+    def __init__(
+        self,
+        name: str = "openai",
+        api_key: str | None = None,
+        model: str | None = None,
+        base_url: str | None = None,
+    ) -> None:
         self.name = name
-        base = settings.llm_base_url or _DEFAULT_BASES.get(name, "")
+        key = api_key if api_key is not None else settings.llm_api_key
+        mod = model if model is not None else settings.llm_model
+        base = base_url if base_url is not None else (settings.llm_base_url or _DEFAULT_BASES.get(name, ""))
+
         if not base:
             raise LLMError(
                 f"LLM_BASE_URL is required for provider '{name}'. "
@@ -47,11 +56,11 @@ class OpenAICompatProvider(LLMProvider):
             )
         # Some local servers (Ollama, LM Studio) don't require a real key.
         self.client = AsyncOpenAI(
-            api_key=settings.llm_api_key or "not-needed",
+            api_key=key or "not-needed",
             base_url=base,
             timeout=settings.query_timeout_seconds,
         )
-        self.model = settings.llm_model
+        self.model = mod
 
     # ── Message builder ─────────────────────────────────────
 
