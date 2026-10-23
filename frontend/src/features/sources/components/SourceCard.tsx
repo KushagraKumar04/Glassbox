@@ -15,3 +15,25 @@ export function SourceCard({ source }: { source: DataSource }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  const remove = async () => {
+    setBusy(true);
+    try {
+      await sourcesApi.remove(source.id);
+      qc.invalidateQueries({ queryKey: ["sources"] });
+    } finally {
+      setBusy(false);
+      setConfirming(false);
+    }
+  };
+
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await sourcesApi.refresh(source.id);
+      qc.invalidateQueries({ queryKey: ["sources"] });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
