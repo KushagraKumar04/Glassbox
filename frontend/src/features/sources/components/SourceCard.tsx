@@ -37,3 +37,42 @@ export function SourceCard({ source }: { source: DataSource }) {
     }
   };
 
+  const healthColor =
+    source.status === "healthy"
+      ? "#34D399"
+      : source.status === "error"
+        ? "#F87171"
+        : "#FBBF24";
+
+  return (
+    <div className="glass rounded-xl p-4 flex flex-col">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div
+            className="w-8 h-8 rounded-lg grid place-items-center flex-none"
+            style={{
+              background: "rgba(139,92,246,.12)",
+              border: "1px solid rgba(139,92,246,.25)",
+            }}
+            aria-hidden="true"
+          >
+            <Server size={14} className="text-violet" strokeWidth={1.8} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[13px] font-medium truncate">
+              {source.name}
+            </div>
+            <div className="font-mono text-[10.5px] text-muted truncate">
+              {KIND_LABEL[source.kind] ?? source.kind}
+              {source.host ? ` · ${source.host}` : ""}
+            </div>
+          </div>
+        </div>
+        <span
+          className="w-2 h-2 rounded-full flex-none mt-1"
+          style={{ background: healthColor }}
+          title={source.status}
+        />
+      </div>
+
