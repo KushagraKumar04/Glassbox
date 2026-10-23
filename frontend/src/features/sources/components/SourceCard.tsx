@@ -76,3 +76,23 @@ export function SourceCard({ source }: { source: DataSource }) {
         />
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 mb-3.5 font-mono text-[10.5px]">
+        <div>
+          <div className="text-muted/60">database</div>
+          <div className="text-txt/85 mt-0.5 truncate">
+            {source.database || "—"}
+          </div>
+        </div>
+        <div>
+          <div className="text-muted/60">tables</div>
+          <div className="text-txt/85 mt-0.5">{source.table_count}</div>
+        </div>
+        <div>
+          <div className="text-muted/60">status</div>
+          <div className="mt-0.5" style={{ color: healthColor }}>
+            {source.status}
+          </div>
+        </div>
+      </div>
+
