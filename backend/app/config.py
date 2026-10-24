@@ -393,6 +393,10 @@ class Settings(BaseSettings):
             if fb in {"gemini", "openai", "anthropic"} and not self.llm_fallback_api_key:
                 raise ValueError(f"LLM_FALLBACK_API_KEY is required for provider '{fb}'")
             if fb in {"openai_compatible", "ollama"} and not self.llm_fallback_base_url:
+                raise ValueError(f"LLM_FALLBACK_BASE_URL is required for provider '{fb}'")
+            if fb not in {"gemini", "openai", "anthropic", "ollama", "openai_compatible"}:
+                raise ValueError(f"Unknown LLM_FALLBACK_PROVIDER='{fb}'.")
+
 
 @lru_cache
 def get_settings() -> Settings:
