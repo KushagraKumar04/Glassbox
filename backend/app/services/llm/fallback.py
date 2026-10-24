@@ -19,3 +19,11 @@ class FallbackProvider(LLMProvider):
     def __init__(self, primary: LLMProvider, fallback: LLMProvider) -> None:
         self.primary = primary
         self.fallback = fallback
+        self.name = f"{primary.name}->{fallback.name}"
+        self.model = primary.model
+
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        system: str | None = None,
