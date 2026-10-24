@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "audit": "npm audit --audit-level=high",
     "audit:fix": "npm audit fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
