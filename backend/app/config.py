@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.0
     llm_max_tokens: int = 8192
 
+    # ── LLM Fallback ────────────────────────────────────────
+    # If the primary LLM fails, retry with this provider/model.
+    # Set to empty string to disable fallback.
+    llm_fallback_provider: str = ""
+    llm_fallback_api_key: str = ""
+    llm_fallback_model: str = ""
+    llm_fallback_base_url: str = ""
+
     # ── App ─────────────────────────────────────────────────
     app_name: str = "Glassbox"
     app_env: str = "development"
