@@ -387,6 +387,12 @@ class Settings(BaseSettings):
                 f"Use: gemini | openai | anthropic | ollama | openai_compatible"
             )
 
+        # Validate fallback
+        fb = self.llm_fallback_provider.lower().strip()
+        if fb:
+            if fb in {"gemini", "openai", "anthropic"} and not self.llm_fallback_api_key:
+                raise ValueError(f"LLM_FALLBACK_API_KEY is required for provider '{fb}'")
+            if fb in {"openai_compatible", "ollama"} and not self.llm_fallback_base_url:
 
 @lru_cache
 def get_settings() -> Settings:
