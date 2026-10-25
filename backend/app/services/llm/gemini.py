@@ -19,11 +19,12 @@ _BACKOFF = 1.5
 class GeminiProvider(LLMProvider):
     name = "gemini"
 
-    def __init__(self) -> None:
-        if not settings.llm_api_key:
+    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
+        key = api_key if api_key is not None else settings.llm_api_key
+        if not key:
             raise LLMError("LLM_API_KEY is required for provider 'gemini'")
-        self.client = genai.Client(api_key=settings.llm_api_key)
-        self.model = settings.llm_model
+        self.client = genai.Client(api_key=key)
+        self.model = model if model is not None else settings.llm_model
 
     # ── Config builder ──────────────────────────────────────
 
