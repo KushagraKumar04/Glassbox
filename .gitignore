@@ -39,3 +39,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Frontend test artifacts
+frontend/coverage/
+frontend/.vitest/
