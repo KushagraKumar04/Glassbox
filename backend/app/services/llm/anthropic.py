@@ -25,6 +25,7 @@ _JSON_HINT = (
 )
 
 
+
 class AnthropicProvider(LLMProvider):
     name = "anthropic"
 
@@ -77,6 +78,7 @@ class AnthropicProvider(LLMProvider):
         raise LLMError(f"Anthropic generate failed: {last_err}") from last_err
 
     # ── Stream ──────────────────────────────────────────────
+
 
     async def stream(
         self,

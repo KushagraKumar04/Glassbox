@@ -15,6 +15,8 @@ node_modules/
 dist/
 .vite/
 *.local
+*.tsbuildinfo
+vite.config.ts.timestamp-*
 
 # ─── Env ──────────────────────────────────────────────────
 .env
@@ -40,6 +42,24 @@ Thumbs.db
 .idea/
 *.swp
 
-# Frontend test artifacts
+# ─── Test & Coverage Artifacts (DO NOT PUSH) ──────────────
+# Python coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# Frontend coverage
 frontend/coverage/
 frontend/.vitest/
+
+# Generic coverage
+coverage/
+*.lcov
+
+# Playwright / Cypress (if you add E2E later)
+playwright-report/
+test-results/
+
+# ─── Logs ─────────────────────────────────────────────────
+*.log
+logs/
