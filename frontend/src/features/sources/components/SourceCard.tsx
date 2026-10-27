@@ -96,3 +96,73 @@ export function SourceCard({ source }: { source: DataSource }) {
         </div>
       </div>
 
+      {source.status === "error" && source.last_error && (
+        <div
+          className="text-[10.5px] font-mono mb-3 rounded-lg p-2 break-all"
+          style={{
+            background: "rgba(248,113,113,.06)",
+            color: "#F87171",
+            border: "1px solid rgba(248,113,113,.2)",
+          }}
+        >
+          {source.last_error.slice(0, 160)}
+          {source.last_error.length > 160 ? "…" : ""}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-1.5 mt-auto">
+        {confirming ? (
+          <>
+            <button
+              type="button"
+              onClick={() => void remove()}
+              disabled={busy}
+              className="px-2.5 py-1 rounded-md text-[11px] cursor-pointer focusable"
+              style={{
+                background: "rgba(248,113,113,.15)",
+                color: "#F87171",
+                border: "1px solid rgba(248,113,113,.3)",
+              }}
+            >
+              {busy ? "…" : "Confirm delete"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="px-2.5 py-1 rounded-md text-[11px] cursor-pointer text-muted focusable"
+              style={{ border: "1px solid rgba(148,163,184,.16)" }}
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              disabled={refreshing}
+              className="btn-chip focusable cursor-pointer"
+            >
+              <RefreshCw
+                size={10}
+                strokeWidth={2}
+                className={refreshing ? "animate-spin" : ""}
+              />
+              {refreshing ? "testing…" : "Test"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="btn-chip focusable cursor-pointer"
+              style={{ color: "#F87171" }}
+            >
+              <Trash2 size={10} strokeWidth={2} />
+              Delete
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
