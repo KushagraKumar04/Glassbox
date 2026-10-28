@@ -1,4 +1,4 @@
-<!-- # Glassbox
+# Glassbox
 
 **Ask your data. Get the answer. See the proof.**
 
@@ -1398,8 +1398,8 @@ Docker-in-Docker, and **do not** mount `docker.sock`.
 
 ## License
 
-MIT -->
-<div align="center">
+MIT
+<!-- <div align="center">
 
 # 🧊 GLASSBOX
 
@@ -1549,4 +1549,4 @@ It keeps the motivation high, helps others discover the project, and gives the b
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=kushagrakumar04/glassbox&type=date&legend=top-left" />
  </picture>
 </a>
-![alt text](image.png)
+![alt text](image.png) -->
