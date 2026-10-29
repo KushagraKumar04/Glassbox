@@ -171,6 +171,7 @@ Generate a key:
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
+
 ### 2. Backend
 
 ```bash
